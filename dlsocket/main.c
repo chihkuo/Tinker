@@ -111,31 +111,29 @@ void get_config()
     initenv((char *)"/usr/home/G320.ini");
 
     // get delay_time_1
-    /*fd = popen("uci get dlsetting.@sms[0].delay_time_1", "r");
+    fd = popen("parameter.sh get delay_time_1", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
     }
     fgets(buf, 128, fd);
     pclose(fd);
-    sscanf(buf, "%d", &delay_time_1);*/
-    delay_time_1 = 20000000;
+    sscanf(buf, "%d", &delay_time_1);
     printf("Delay time 1 (us.) = %d\n", delay_time_1);
 
     // get delay_time_2
-    /*fd = popen("uci get dlsetting.@sms[0].delay_time_2", "r");
+    fd = popen("parameter.sh get delay_time_2", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
     }
     fgets(buf, 128, fd);
     pclose(fd);
-    sscanf(buf, "%d", &delay_time_2);*/
-    delay_time_2 = 1500000;
+    sscanf(buf, "%d", &delay_time_2);
     printf("Delay time 2 (us.) = %d\n", delay_time_2);
 
     // get com port
-    /*fd = fopen(MODEL_PATH, "rb");
+    fd = fopen(MODEL_PATH, "rb");
     if ( fd == NULL ) {
         printf("fopen fail!\n");
         return;
@@ -151,13 +149,11 @@ void get_config()
     fclose(fd);
 
     if ( com_port == 0 )
-        return;*/
-
-    com_port = 1;
+        return;
 
     // get com port setting
     // get baud
-    /*sprintf(cmd, "uci get dlsetting.@comport[0].com%d_baud", com_port);
+    sprintf(cmd, "parameter.sh get com%d_baud", com_port);
     fd = popen(cmd, "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
@@ -165,12 +161,11 @@ void get_config()
     }
     fgets(buf, 128, fd);
     pclose(fd);
-    sscanf(buf, "%d", &baud_rate);*/
-    baud_rate = 9600;
+    sscanf(buf, "%d", &baud_rate);
     printf("Baud rate = %d\n", baud_rate);
 
     // get data bits
-    /*sprintf(cmd, "uci get dlsetting.@comport[0].com%d_data_bits", com_port);
+    sprintf(cmd, "parameter.sh get com%d_data_bits", com_port);
     fd = popen(cmd, "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
@@ -178,12 +173,11 @@ void get_config()
     }
     fgets(buf, 128, fd);
     pclose(fd);
-    sscanf(buf, "%d", &data_bits);*/
-    data_bits = 8;
+    sscanf(buf, "%d", &data_bits);
     printf("Data bits = %d\n", data_bits);
 
     // get parity
-    /*sprintf(cmd, "uci get dlsetting.@comport[0].com%d_parity", com_port);
+    sprintf(cmd, "parameter.sh get com%d_parity", com_port);
     fd = popen(cmd, "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
@@ -191,12 +185,11 @@ void get_config()
     }
     fgets(parity, 8, fd);
     pclose(fd);
-    parity[strlen(parity)-1] = 0;*/ // clean \n
-    strcpy(parity, "None");
+    parity[strlen(parity)-1] = 0; // clean \n
     printf("Parity = %s\n", parity);
 
     // get stop bits
-    /*sprintf(cmd, "uci get dlsetting.@comport[0].com%d_stop_bits", com_port);
+    sprintf(cmd, "parameter.sh get com%d_stop_bits", com_port);
     fd = popen(cmd, "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
@@ -204,20 +197,18 @@ void get_config()
     }
     fgets(buf, 128, fd);
     pclose(fd);
-    sscanf(buf, "%d", &stop_bits);*/
-    stop_bits = 1;
+    sscanf(buf, "%d", &stop_bits);
     printf("Stop bits = %d\n", stop_bits);
 
     // get upload interval
-    /*fd = popen("uci get dlsetting.@sms[0].upload_time", "r");
+    fd = popen("parameter.sh get upload_time", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
     }
     fgets(buf, 128, fd);
     pclose(fd);
-    sscanf(buf, "%d", &tmp_interval);*/
-    tmp_interval = 60;
+    sscanf(buf, "%d", &tmp_interval);
     if ( update_interval == tmp_interval ) {
         printf("same update interval %d\n", update_interval);
     } else {
