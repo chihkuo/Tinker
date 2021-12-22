@@ -3348,12 +3348,14 @@ int main(int argc , char *argv[])
 
                     // do set wifi config
                     // set ssid
-                    sprintf(buf, "sed -i \"s/ssid=.*/ssid=\\\"%s\\\"/g\" wpa_supplicant.conf_set", ssid);
+                    sprintf(buf, "sed -i \"s/ssid=.*/ssid=\\\"%s\\\"/g\" /home/linaro/init/configs/wpa_supplicant.conf_set", ssid);
                     printf(buf);
+                    printf("\n");
                     system(buf);
                     // set password
-                    sprintf(buf, "sed -i \"s/psk=.*/psk=\\\"%s\\\"/g\" wpa_supplicant.conf_set", password);
+                    sprintf(buf, "sed -i \"s/psk=.*/psk=\\\"%s\\\"/g\" /home/linaro/init/configs/wpa_supplicant.conf_set", password);
                     printf(buf);
+                    printf("\n");
                     system(buf);
                     system("sync; sync");
                     // end
