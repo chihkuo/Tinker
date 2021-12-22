@@ -2022,7 +2022,7 @@ int initenv(char * ini_name)
     char buf[32] = {0};
     FILE *pFile = NULL;
     // get cleartx_delay
-    pFile = popen("parameter.sh get cleartx_delay", "r");
+    pFile = popen("/home/linaro/bin/parameter.sh get cleartx_delay", "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
     } else {
