@@ -3358,6 +3358,9 @@ int main(int argc , char *argv[])
                     printf("\n");
                     system(buf);
                     system("sync; sync");
+
+                    system("/home/linaro/init/setmode.sh client");
+                    system("sync; sudo reboot");
                     // end
                     break;
 
