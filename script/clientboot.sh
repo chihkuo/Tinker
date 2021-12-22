@@ -2,7 +2,7 @@
 
 touch /home/linaro/clientboot.txt
 
-sleep 10
+sleep 5
 sudo killall wpa_supplicant
 sleep 1
 sudo /sbin/wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf
