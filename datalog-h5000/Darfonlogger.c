@@ -1982,20 +1982,20 @@ void DebugPrint(unsigned char *lpData, int size, char *lpHeader)
 
 int initenv(char * ini_name)
 {
-    dictionary  *   ini ;
+    //dictionary  *   ini ;
 
     /* Some temporary variables to hold query results */
-    int             b ;
-    int             i ;
-    double          d ;
-    const char  *   s ;
+    //int             b ;
+    //int             i ;
+    //double          d ;
+    //const char  *   s ;
 
-    ini = iniparser_load(ini_name);
+    /*ini = iniparser_load(ini_name);
     if (ini==NULL) {
         fprintf(stderr, "cannot parse file: %s\n", ini_name);
         return -1 ;
     }
-    iniparser_dump(ini, stderr);
+    iniparser_dump(ini, stderr);*/
 
 /*    memset(g_dlData.g_zonename, 0x00, 64);
     s = iniparser_getstring(ini, "device:zonename", NULL);
@@ -2014,13 +2014,15 @@ int initenv(char * ini_name)
         printf("timezone not found!\n");
 */
     // get dealy time for darfon
-    g_global.g_delay1 = iniparser_getint(ini, "darfon:delay1", 1000 ); // 500
-    g_global.g_delay2 = iniparser_getint(ini, "darfon:delay2", 500 ); // 200
+    //g_global.g_delay1 = iniparser_getint(ini, "darfon:delay1", 1000 ); // 500
+	g_global.g_delay1 = 500;
+    //g_global.g_delay2 = iniparser_getint(ini, "darfon:delay2", 500 ); // 200
+	g_global.g_delay2 = 200;
     //g_global.g_delay3 = iniparser_getint(ini, "darfon:delay3", 100 ); // 100
     char buf[32] = {0};
     FILE *pFile = NULL;
     // get cleartx_delay
-    pFile = popen("uci get dlsetting.@sms[0].cleartx_delay", "r");
+    pFile = popen("parameter.sh get cleartx_delay", "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
     } else {
@@ -2032,24 +2034,25 @@ int initenv(char * ini_name)
         g_global.g_delay3 = 100;
     printf("g_delay3: %d \n", g_global.g_delay3);
 
-    s = iniparser_getstring(ini, "darfon:plcid", "0x00,0x05,0x00,0x01,0x00,0x00,0x00,0xFF");
+    /*s = iniparser_getstring(ini, "darfon:plcid", "0x00,0x05,0x00,0x01,0x00,0x00,0x00,0xFF");
     unsigned int xbuf[8];
     sscanf(s, "%x,%x,%x,%x,%x,%x,%x,%x",&xbuf[0],&xbuf[1],&xbuf[2],&xbuf[3],&xbuf[4],&xbuf[5],&xbuf[6],&xbuf[7] );
     for (i=0; i<8; i++) {
        g_dlData.g_plcid[i] = (unsigned char)(xbuf[i]&0x00ff);
-    }
+    }*/
 
 
-    g_global.g_fetchtime = iniparser_getint(ini, "darfon:fetchtime", 60 );  // seconds
-    s = iniparser_getstring(ini, "darfon:internal_ip", "192.168.1.1");
+    //g_global.g_fetchtime = iniparser_getint(ini, "darfon:fetchtime", 60 );  // seconds
+	g_global.g_fetchtime = 60;
+    /*s = iniparser_getstring(ini, "darfon:internal_ip", "192.168.1.1");
     strcpy(g_dlData.g_internalIp, s);
     s = iniparser_getstring(ini, "darfon:external_ip", "168.95.1.1");
-    strcpy(g_dlData.g_externalIp, s);
+    strcpy(g_dlData.g_externalIp, s);*/
 
 
 
 
-    iniparser_freedict(ini);
+    //iniparser_freedict(ini);
     return 0 ;
 }
 
