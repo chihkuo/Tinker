@@ -1,0 +1,11 @@
+update_config=1
+country=US
+
+network={
+	ssid="eB-Taipei2"
+	psk="1A+3B=2CSteve"
+	proto=RSN
+	key_mgmt=WPA-PSK
+	pairwise=CCMP
+	auth_alg=OPEN
+}
