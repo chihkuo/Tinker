@@ -2623,7 +2623,7 @@ int main(int argc , char *argv[])
     printf("Start DL socket.\n");
 
     char FILENAME[64] = {0};
-    char buf[128] = {0};
+    char buf[1024] = {0};
     FILE *pdate_fd = NULL;
     FILE *ptime_fd = NULL;
     FILE *pset_fd = NULL;
@@ -3347,7 +3347,15 @@ int main(int argc , char *argv[])
                     send(forClientSockfd, ret_buf, 8, 0);
 
                     // do set wifi config
-                    // ...
+                    // set ssid
+                    sprintf(buf, "sed -i \"s/ssid=.*/ssid=\\\"%s\\\"/g\" wpa_supplicant.conf_set", ssid);
+                    printf(buf);
+                    system(buf);
+                    // set password
+                    sprintf(buf, "sed -i \"s/psk=.*/psk=\\\"%s\\\"/g\" wpa_supplicant.conf_set", password);
+                    printf(buf);
+                    system(buf);
+                    system("sync; sync");
                     // end
                     break;
 
