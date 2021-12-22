@@ -3284,7 +3284,6 @@ int main(int argc , char *argv[])
                     break;
 */
                 case 0x01:
-                    break;
                     printf("cmd 01 ok. set SSID & PASSWORD.\n");
 
                     totalsize = (cmd_buf[2] << 24) + (cmd_buf[3] << 16) + (cmd_buf[4] << 8) + cmd_buf[5];
