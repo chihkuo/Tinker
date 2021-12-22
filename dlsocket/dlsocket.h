@@ -7,7 +7,7 @@
 #define ERRLOG_PATH "/mnt/XML/ERRLOG"
 #define ENV_PATH    "/mnt/XML/ENV"
 #define SYSLOG_PATH "/mnt/SYSLOG"
-#define MODEL_PATH  "/usr/home/ModelList"
+#define MODEL_PATH  "/home/linaro/bin/ModelList"
 
 #define DEF_LOG_PATH    "/tmp/test/XML/LOG"
 #define DEF_ERRLOG_PATH "/tmp/test/XML/ERRLOG"

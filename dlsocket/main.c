@@ -111,7 +111,7 @@ void get_config()
     initenv((char *)"init");
 
     // get delay_time_1
-    fd = popen("parameter.sh get delay_time_1", "r");
+    fd = popen("/home/linaro/bin/parameter.sh get delay_time_1", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -122,7 +122,7 @@ void get_config()
     printf("Delay time 1 (us.) = %d\n", delay_time_1);
 
     // get delay_time_2
-    fd = popen("parameter.sh get delay_time_2", "r");
+    fd = popen("/home/linaro/bin/parameter.sh get delay_time_2", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -153,7 +153,7 @@ void get_config()
 
     // get com port setting
     // get baud
-    sprintf(cmd, "parameter.sh get com%d_baud", com_port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_baud", com_port);
     fd = popen(cmd, "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
@@ -165,7 +165,7 @@ void get_config()
     printf("Baud rate = %d\n", baud_rate);
 
     // get data bits
-    sprintf(cmd, "parameter.sh get com%d_data_bits", com_port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_data_bits", com_port);
     fd = popen(cmd, "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
@@ -177,7 +177,7 @@ void get_config()
     printf("Data bits = %d\n", data_bits);
 
     // get parity
-    sprintf(cmd, "parameter.sh get com%d_parity", com_port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_parity", com_port);
     fd = popen(cmd, "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
@@ -189,7 +189,7 @@ void get_config()
     printf("Parity = %s\n", parity);
 
     // get stop bits
-    sprintf(cmd, "parameter.sh get com%d_stop_bits", com_port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_stop_bits", com_port);
     fd = popen(cmd, "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
@@ -201,7 +201,7 @@ void get_config()
     printf("Stop bits = %d\n", stop_bits);
 
     // get upload interval
-    fd = popen("parameter.sh get upload_time", "r");
+    fd = popen("/home/linaro/bin/parameter.sh get upload_time", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
