@@ -17,5 +17,7 @@ if [[ -e '/home/linaro/apboot.txt' ]]; then
 	else
 		echo "network fail, return AP mode"
 		/home/linaro/init/setmode.sh ap
+		sync
+		sudo reboot
 	fi
 fi
