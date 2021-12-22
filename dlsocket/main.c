@@ -108,7 +108,7 @@ void get_config()
     int tmp_interval = 0;
     struct stat st;
 
-    initenv((char *)"/usr/home/G320.ini");
+    initenv((char *)"init");
 
     // get delay_time_1
     fd = popen("parameter.sh get delay_time_1", "r");
@@ -2631,9 +2631,15 @@ int main(int argc , char *argv[])
     int totalsize = 0, getsize = 0;
     struct stat st;
 
+    // for ssid & password
+    char ssid[128] = {0};
+    char password[128] = {0};
+    char *start_index = NULL, *end_index = NULL;
+
     // create socket
     unsigned char cmd_buf[8] = {0};
     unsigned char ret_buf[8] = {0};
+    unsigned char set_buf[1024] = {0};
     int sockfd = 0, forClientSockfd = 0;
 
     printf("run socket()\n");
@@ -2683,7 +2689,7 @@ int main(int argc , char *argv[])
         if (ret) {
             // cmd OK, do action by function code
             switch (cmd_buf[1]) {
-                case 0x01: //get list
+/*                case 0x01: //get list
                     printf("cmd 01 ok. get list.\n");
 
                     stop_process();
@@ -3174,8 +3180,6 @@ int main(int argc , char *argv[])
                 case 0x06:
                     printf("cmd 06 ok. set data.\n");
 
-                    unsigned char set_buf[1024] = {0};
-
                     totalsize = (cmd_buf[2] << 24) + (cmd_buf[3] << 16) + (cmd_buf[4] << 8) + cmd_buf[5];
 
                     // get data
@@ -3278,6 +3282,75 @@ int main(int argc , char *argv[])
                     printf("send result %d\n", ret);
                     send(forClientSockfd, ret_buf, 8, 0);
                     break;
+*/
+                case 0x01:
+                    break;
+                    printf("cmd 01 ok. set SSID & PASSWORD.\n");
+
+                    totalsize = (cmd_buf[2] << 24) + (cmd_buf[3] << 16) + (cmd_buf[4] << 8) + cmd_buf[5];
+
+                    // get data
+                    memset(set_buf, 0x00, 1024);
+                    getsize = recv(forClientSockfd, set_buf, totalsize, 0);
+                    printf("getsize = %d\n", getsize);
+
+                    // paser parameter
+                    start_index = (char*)set_buf;
+                    // ssid
+                    start_index = strstr(start_index, "<ssid>");
+                    end_index = strstr(start_index, "</ssid>");
+                    if ( (start_index != NULL) && (end_index != NULL) ) {
+                        strncpy(ssid, start_index+6, end_index-start_index-6);
+                        printf("ssid = %s\n", ssid);
+                    } else {
+                        ret_buf[0] = 0xFA;
+                        ret_buf[1] = 0x01;
+                        ret_buf[2] = 0x00;
+                        ret_buf[3] = 0x00;
+                        ret_buf[4] = 0x00;
+                        ret_buf[5] = 0x01;
+                        ret_buf[6] = ret_buf[0] + ret_buf[1] + ret_buf[2] + ret_buf[3] + ret_buf[4] + ret_buf[5];
+                        ret_buf[7] = 0xAF;
+                        printf("send result 1\n");
+                        send(forClientSockfd, ret_buf, 8, 0);
+                        break;
+                    }
+                    // password
+                    start_index = strstr(start_index, "<pw>");
+                    end_index = strstr(start_index, "</pw>");
+                    if ( (start_index != NULL) && (end_index != NULL) ) {
+                        strncpy(password, start_index+4, end_index-start_index-4);
+                        printf("password = %s\n", password);
+                    } else {
+                        ret_buf[0] = 0xFA;
+                        ret_buf[1] = 0x01;
+                        ret_buf[2] = 0x00;
+                        ret_buf[3] = 0x00;
+                        ret_buf[4] = 0x00;
+                        ret_buf[5] = 0x02;
+                        ret_buf[6] = ret_buf[0] + ret_buf[1] + ret_buf[2] + ret_buf[3] + ret_buf[4] + ret_buf[5];
+                        ret_buf[7] = 0xAF;
+                        printf("send result 2\n");
+                        send(forClientSockfd, ret_buf, 8, 0);
+                        break;
+                    }
+
+                    // send OK
+                    ret_buf[0] = 0xFA;
+                    ret_buf[1] = 0x01;
+                    ret_buf[2] = 0x00;
+                    ret_buf[3] = 0x00;
+                    ret_buf[4] = 0x00;
+                    ret_buf[5] = 0x00;
+                    ret_buf[6] = ret_buf[0] + ret_buf[1] + ret_buf[2] + ret_buf[3] + ret_buf[4] + ret_buf[5];
+                    ret_buf[7] = 0xAF;
+                    printf("send OK\n");
+                    send(forClientSockfd, ret_buf, 8, 0);
+
+                    // do set wifi config
+                    // ...
+                    // end
+                    break;
 
                 case 0x99:
                     printf("cmd 99 ok. end.\n");
@@ -3293,12 +3366,12 @@ int main(int argc , char *argv[])
                     printf("send 0\n");
                     send(forClientSockfd, ret_buf, 8, 0);
 
-                    if ( com_fd > 0 ) {
+                    /*if ( com_fd > 0 ) {
                         ModbusDrvDeinit(com_fd);
                         com_fd = 0;
                         // run other program
                         start_process();
-                    }
+                    }*/
                     break;
 
                 default:
@@ -3312,12 +3385,12 @@ int main(int argc , char *argv[])
             switch (cmd_buf[1]) {
                 case 0x00:
                     printf("cmd 0, nothing to do.\n");
-                    if ( com_fd > 0 ) {
+                    /*if ( com_fd > 0 ) {
                         ModbusDrvDeinit(com_fd);
                         com_fd = 0;
                         // run other program
                         start_process();
-                    }
+                    }*/
                     break;
                 case 0x01:
                     printf("cmd 1 error\n");
