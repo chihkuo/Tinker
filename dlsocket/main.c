@@ -12,6 +12,8 @@
 
 #define MY_PORT 8700
 
+#define CONFIG_HEADER "ctrl_interface=/var/run/wpa_supplicant\nupdate_config=1\n\nnetwork={\n"
+
 // config
 int delay_time_1 = 0;
 int delay_time_2 = 0;
@@ -2630,6 +2632,8 @@ int main(int argc , char *argv[])
     int logdate = 0, size = 0, cmddate = 0;
     int totalsize = 0, getsize = 0;
     struct stat st;
+    char *list_bufp = NULL;
+    char *buf_tmpp = NULL;
 
     // for ssid & password
     char ssid[128] = {0};
@@ -3290,6 +3294,8 @@ int main(int argc , char *argv[])
 
                     // get data
                     memset(set_buf, 0x00, 1024);
+                    memset(ssid, 0x00, 128);
+                    memset(password, 0x00, 128);
                     getsize = recv(forClientSockfd, set_buf, totalsize, 0);
                     printf("getsize = %d\n", getsize);
 
@@ -3334,34 +3340,144 @@ int main(int argc , char *argv[])
                         break;
                     }
 
-                    // send OK
-                    ret_buf[0] = 0xFA;
-                    ret_buf[1] = 0x01;
-                    ret_buf[2] = 0x00;
-                    ret_buf[3] = 0x00;
-                    ret_buf[4] = 0x00;
-                    ret_buf[5] = 0x00;
-                    ret_buf[6] = ret_buf[0] + ret_buf[1] + ret_buf[2] + ret_buf[3] + ret_buf[4] + ret_buf[5];
-                    ret_buf[7] = 0xAF;
-                    printf("send OK\n");
-                    send(forClientSockfd, ret_buf, 8, 0);
-
                     // do set wifi config
-                    // set ssid
-                    sprintf(buf, "sed -i \"s/ssid=.*/ssid=\\\"%s\\\"/g\" /home/linaro/init/configs/wpa_supplicant.conf_set", ssid);
-                    printf(buf);
-                    printf("\n");
-                    system(buf);
-                    // set password
-                    sprintf(buf, "sed -i \"s/psk=.*/psk=\\\"%s\\\"/g\" /home/linaro/init/configs/wpa_supplicant.conf_set", password);
-                    printf(buf);
-                    printf("\n");
-                    system(buf);
-                    system("sync; sync");
+                    // get wifi list
+                    system("sudo su - -c \"iwlist wlan0 scan > /run/wifi_list\" ; sync");
+                    ret = stat("/run/wifi_list", &st);
+                    printf("wifi list size = %d\n", (int)st.st_size);
+                    list_bufp = calloc((int)st.st_size, sizeof(char));
+                    pset_fd = fopen("/run/wifi_list", "rb");
+                    if ( pset_fd == NULL ) {
+                        break;
+                    }
+                    fread(list_bufp, (int)st.st_size, 1, pset_fd);
+                    fclose(pset_fd);
+                    
+                    start_index = list_bufp;
+                    int size_sum = 0, flag = 0;
+                    char *target_index = NULL;
+                    char strtmp[256] = {0};
+                    while ( start_index != NULL ) {
+                    	// parser Cell
+                    	start_index = strstr(start_index, "Cell ");
+                    	end_index = strstr(start_index+4, "Cell ");
+			if (start_index != NULL) {
+				if (end_index != NULL) {
+					buf_tmpp = calloc((unsigned int)end_index - (unsigned int)start_index, sizeof(char));
+					strncpy(buf_tmpp, start_index, (unsigned int)end_index - (unsigned int)start_index);
+					size_sum += ((unsigned int)end_index - (unsigned int)start_index);
+				} else {
+					buf_tmpp = calloc((int)st.st_size - size_sum, sizeof(char));
+					strncpy(buf_tmpp, start_index, (int)st.st_size - size_sum);
+				}
+				// find AP with ssid
+				target_index = strstr(buf_tmpp, ssid);
+				if (target_index != NULL) {
+					printf("find ssid!\n");
+					printf("buf_tmpp = \n%s\n", buf_tmpp);
+					pset_fd = fopen("/home/linaro/init/config/wpa_supplicant.conf", "wb");
+					fwrite(CONFIG_HEADER, strlen(CONFIG_HEADER), 1, pset_fd);
+					sprintf(strtmp, "\tssid=\"%s\"\n", ssid);
+					fwrite(strtmp, strlen(strtmp), 1, pset_fd);
+					// check encryption Encryption key:on/off
+					if (strstr(buf_tmpp, "Encryption key:on")) {
+						// check wpa2
+						if (strstr(buf_tmpp, "IE: IEEE 802.11i/WPA2")) {
+							target_index = strstr(buf_tmpp, "IE: IEEE 802.11i/WPA2");
+							// do wpa2 set
+							printf("set WPA2 config\n");
+							sprintf(strtmp, "\tpsk=\"%s\"\n", password);
+							fwrite(strtmp, strlen(strtmp), 1, pset_fd);
+							fwrite("\tproto=RSN\n", 11, 1, pset_fd);
+							if (strstr(target_index, "Group Cipher : TKIP"))
+								fwrite("\tgroup=TKIP\n", 12, 1, pset_fd);
+							if (strstr(target_index, "Group Cipher : CCMP"))
+								fwrite("\tgroup=CCMP\n", 12, 1, pset_fd);
+							if (strstr(target_index, "Pairwise Ciphers (2)"))
+								fwrite("\tpairwise=CCMP TKIP\n", 20, 1, pset_fd);
+							else if (strstr(target_index, "Pairwise Ciphers (1) : TKIP"))
+								fwrite("\tpairwise=TKIP\n", 15, 1, pset_fd);
+							else if (strstr(target_index, "Pairwise Ciphers (1) : CCMP"))
+								fwrite("\tpairwise=CCMP\n", 15, 1, pset_fd);
+							if (strstr(target_index, " PSK"))
+								fwrite("\tkey_mgmt=WPA-PSK\n", 18, 1, pset_fd);
+							else if (strstr(target_index, " EAP"))
+								fwrite("\tkey_mgmt=WPA-EAP\n", 18, 1, pset_fd);
+						} else if (strstr(buf_tmpp, "IE: WPA Version 1")) { // check wpa
+							target_index = strstr(buf_tmpp, "IE: WPA Version 1");
+							// do wpa set
+							printf("set WPA config\n");
+							sprintf(strtmp, "\tpsk=\"%s\"\n", password);
+							fwrite(strtmp, strlen(strtmp), 1, pset_fd);
+							fwrite("\tproto=WPA\n", 11, 1, pset_fd);
+							if (strstr(target_index, "Group Cipher : TKIP"))
+								fwrite("\tgroup=TKIP\n", 12, 1, pset_fd);
+							if (strstr(target_index, "Group Cipher : CCMP"))
+								fwrite("\tgroup=CCMP\n", 12, 1, pset_fd);
+							if (strstr(target_index, "Pairwise Ciphers (2)"))
+								fwrite("\tpairwise=CCMP TKIP\n", 20, 1, pset_fd);
+							else if (strstr(target_index, "Pairwise Ciphers (1) : TKIP"))
+								fwrite("\tpairwise=TKIP\n", 15, 1, pset_fd);
+							else if (strstr(target_index, "Pairwise Ciphers (1) : CCMP"))
+								fwrite("\tpairwise=CCMP\n", 15, 1, pset_fd);
+							if (strstr(target_index, " PSK"))
+								fwrite("\tkey_mgmt=WPA-PSK\n", 18, 1, pset_fd);
+							else if (strstr(target_index, " EAP"))
+								fwrite("\tkey_mgmt=WPA-EAP\n", 18, 1, pset_fd);
+						} else {
+							// do wep set
+							printf("set WEP config\n");
+							sprintf(strtmp, "\twep_key0=\"%s\"\n", password);
+							fwrite(strtmp, strlen(strtmp), 1, pset_fd);
+							fwrite("\tkey_mgmt=NONE\n", 15, 1, pset_fd);
+						}
+					} else {
+						// not encryption
+						printf("Not encryption!\n");
+						fwrite("\tkey_mgmt=NONE\n", 15, 1, pset_fd);
+					}
+					fwrite("\tauth_alg=OPEN\n", 15, 1, pset_fd);
+					fwrite("}", 1, 1, pset_fd);
+					fclose(pset_fd);
+					flag = 1;
+				} else {
+					//printf("ssid not match!\n");
+				}
+				free(buf_tmpp);
+			}
+			start_index = end_index;
+                    }
+                    free(list_bufp);
+			printf("set ssid & password end\n");
 
-                    system("/home/linaro/init/setmode.sh client");
-                    system("sync; sudo reboot");
-                    // end
+                    if (flag) {
+			// send OK
+			ret_buf[0] = 0xFA;
+			ret_buf[1] = 0x01;
+			ret_buf[2] = 0x00;
+			ret_buf[3] = 0x00;
+			ret_buf[4] = 0x00;
+			ret_buf[5] = 0x00;
+			ret_buf[6] = ret_buf[0] + ret_buf[1] + ret_buf[2] + ret_buf[3] + ret_buf[4] + ret_buf[5];
+			ret_buf[7] = 0xAF;
+			printf("send OK\n");
+			send(forClientSockfd, ret_buf, 8, 0);
+
+			system("/home/linaro/init/setmode.sh client");
+			system("/home/linaro/init/myinit.sh");
+		    } else {
+			// send ssid not found
+			ret_buf[0] = 0xFA;
+			ret_buf[1] = 0x01;
+			ret_buf[2] = 0x00;
+			ret_buf[3] = 0x00;
+			ret_buf[4] = 0x00;
+			ret_buf[5] = 0x03;
+			ret_buf[6] = ret_buf[0] + ret_buf[1] + ret_buf[2] + ret_buf[3] + ret_buf[4] + ret_buf[5];
+			ret_buf[7] = 0xAF;
+			printf("send result 3\n");
+			send(forClientSockfd, ret_buf, 8, 0);
+		    }
                     break;
 
                 case 0x99:
