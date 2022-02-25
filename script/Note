@@ -8,7 +8,6 @@ sudo mv /etc/rc2345.d/S03Tinker_boot /etc/rc2345.d/S90Tinker_boot (set order)
 copy dnsmasq.conf to /etc/
 copy hostapd to /etc/default/
 copy hostapd.conf to /etc/hostapd/
-copy wpa_supplicant.conf to /etc/wpa_supplicant/
 
 #about config
 mkdir /home/linaro/init
