@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 #include "iodef.h"
 #include "modbusdrv.h"
 //mike-#include "main.h"
@@ -28,6 +29,10 @@
 #include "linux/serial.h"
 #include "DarfonloggerGlobe.h"
 #include "gdefine.h"
+
+// for C GPIO library
+#include <wiringPi.h>
+#define GP6A0 1
 
 
 //#define SUPPORT_ZIGBEE
@@ -748,17 +753,45 @@ Chk_URI_Address:
 void MStartTX(int fd)
 {
 	long i;
+	char buf[256] = {0};
 	TRC_TXIDLE=0;
+	struct timeval tv;
+
 	/* LED status control */
 	/* send to MODBUS */
 	//DEBUG2(PrintTxBuffer());   //mike+
 	////writeLog(txbuffer);
 	////printf("enter MStartTX!!\n");
 	DebugPrint(txbuffer,txsize, "send");
+
+	//gettimeofday(&tv, NULL);
+	//printf("Time start: %d.%06d\n", tv.tv_sec, tv.tv_usec);
+	// set GPIO high
+	printf("GPIO : set HIGH\n");
+	digitalWrite(GP6A0, HIGH);
+	//gettimeofday(&tv, NULL);
+	//printf("Time end: %d.%06d\n", tv.tv_sec, tv.tv_usec);
+
 	//i=write(fdModbus, txbuffer, txsize);
 	i=write(fd, txbuffer, txsize);
 	printf("write to %d, return %ld\n", fd, i);
 	//getchar();
+	// add sleep to wait
+	if ( i > 0 )
+		usleep(i*1000+1000);
+		//usleep(40000);
+	else
+		usleep(1000);
+	//gettimeofday(&tv, NULL);
+	//printf("Time start: %d.%06d\n", tv.tv_sec, tv.tv_usec);
+
+	//gettimeofday(&tv, NULL);
+	//printf("Time: %d.%06d\n", tv.tv_sec, tv.tv_usec);
+	// set GPIO low
+	printf("GPIO : set LOW\n");
+	digitalWrite(GP6A0, LOW);
+	//gettimeofday(&tv, NULL);
+	//printf("Time end: %d.%06d\n", tv.tv_sec, tv.tv_usec);
 
     MClearTX_Noise(0.01);//0.3 mike20160407+ // 0.01 chih 20190220
 	receiveState=URS_Address;
@@ -1710,16 +1743,17 @@ unsigned char *GetRespond(int fd, int iSize, int delay)
 	//DebugPrint(respond_buff, len, "recv");
 
 	if ( all_len > 0 ) {
-        i = 0;
-        while ( i != -1 ) {
-            //i=read(fdModbus, respond_buff, 4096);
-            i=read(fd, respond_buff, 4096);
-            if ( i!= -1 )
-                DebugPrint(respond_buff, i, "Clean");
-        }
-    } else
-        // no response
-        printf("NO response!!\n");
+		i = 0;
+        	while ( i != -1 ) {
+            		//i=read(fdModbus, respond_buff, 4096);
+            		i=read(fd, respond_buff, 4096);
+            		if ( i!= -1 )
+                	DebugPrint(respond_buff, i, "Clean");
+        	}
+    	} else {
+        	// no response
+        	printf("NO response!!\n");
+    	}
 
 	return NULL;
 }

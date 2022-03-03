@@ -2596,8 +2596,7 @@ int write_data(char *sn, int addr, int count, unsigned char *data)
 
 int main(int argc , char *argv[])
 {
-    //char opt;
-    int opt = 0, star_flag = 0;
+    int opt = 0;
     while( (opt = getopt(argc, argv, "vVtTsS")) != -1 )
     {
         switch (opt)
@@ -2615,11 +2614,8 @@ int main(int argc , char *argv[])
                 return 1;
             case 's':
             case 'S':
-                star_flag = 1;
                 break;
         }
-        if (star_flag == 1)
-            break;
     }
 
     printf("Start DL socket.\n");

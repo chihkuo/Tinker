@@ -22,7 +22,7 @@ all:
 	$(CPP) -Wall -c G320.cpp
 	$(CPP) -Wall -c CyberPower.cpp
 	$(CPP) -Wall -c ADtek_CS1.cpp
-	$(CPP) -Wall main.cpp modbusdrv.o Darfonlogger.o G320.o CyberPower.o ADtek_CS1.o iniparser-2.17/src/dictionary.o iniparser-2.17/src/strlib.o iniparser-2.17/src/iniparser.o -lpthread ../common/SaveLog.o -o dlg320.exe
+	$(CPP) -Wall main.cpp modbusdrv.o Darfonlogger.o G320.o CyberPower.o ADtek_CS1.o iniparser-2.17/src/dictionary.o iniparser-2.17/src/strlib.o iniparser-2.17/src/iniparser.o -lpthread ../common/SaveLog.o -lwiringPi -o dlg320.exe
 
 clean:
 	cd iniparser-2.17; make clean

@@ -772,5 +772,6 @@ typedef struct stDL_Path {
     char    m_bms_path[128];
     char    m_syslog_path[128];
     char    m_env_path[128];
+    char    m_usb_path[128];
 }DL_PATH;
 #endif // GDEFINE_H_INCLUDE

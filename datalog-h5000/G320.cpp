@@ -3,31 +3,34 @@
 #include "sys_error.h"
 #include <unistd.h>
 #include <sys/stat.h>
+#include <wiringPi.h>
 
-#define DEF_PATH        "/tmp/test"
+#define GP6A0	1
+
+#define DEF_PATH        "/run/user/1000"
 #define BMS_PATH        DEF_PATH"/BMS"
 #define XML_PATH        DEF_PATH"/XML"
 #define SYSLOG_PATH     DEF_PATH"/SYSLOG"
-#define DEVICELIST_TMP "/tmp/tmpDeviceList"
-#define DEVICELIST_PATH "/tmp/DeviceList"
-#define DEV_XML_PATH        "/tmp/XML_PATH"
+#define DEVICELIST_TMP "/run/user/1000/tmpDeviceList"
+#define DEVICELIST_PATH "/run/user/1000/DeviceList"
+//#define DEV_XML_PATH        "/tmp/XML_PATH"
 //#define USB_PATH        "/tmp/usb"
 //#define USB_PATH        "/tmp/run/mountd/sda1"
-#define USB_PATH        "/mnt"
+//#define USB_PATH        "/mnt"
 #define USB_DEV         "/dev/sda1"
-#define SDCARD_PATH     "/tmp/sdcard"
+#define SDCARD_PATH     "/run/user/1000/sdcard"
 
-#define WHITE_LIST_PATH "/usr/home/White-List.txt"
-#define WHITE_LIST_V3_PATH "/usr/home/White-List_V3.txt"
-#define TODOLIST_PATH   "/tmp/TODOList"
-#define WL_CHANGED_PATH "/tmp/WL_Changed"
+#define WHITE_LIST_PATH "/home/linaro/bin/White-List.txt"
+#define WHITE_LIST_V3_PATH "/home/linaro/bin/White-List_V3.txt"
+#define TODOLIST_PATH   "/run/user/1000/TODOList"
+#define WL_CHANGED_PATH "/run/user/1000/WL_Changed"
 
 //#define TIMEZONE_URL    "http://ip-api.com/json"
 #define TIMEZONE_URL    "https://worldtimeapi.org/api/ip"
 //#define TIME_OFFSET_URL "http://svn.fonosfera.org/fon-ng/trunk/luci/modules/admin-fon/root/etc/timezones.db"
-#define TIME_OFFSET_URL "https://raw.githubusercontent.com/openwrt/luci/master/modules/luci-base/luasrc/sys/zoneinfo/tzdata.lua"
+//#define TIME_OFFSET_URL "https://raw.githubusercontent.com/openwrt/luci/master/modules/luci-base/luasrc/sys/zoneinfo/tzdata.lua"
 //#define KEY             "O10936IZHJTQ"
-#define TIME_SERVER_URL "https://www.worldtimeserver.com/handlers/GetData.ashx?action=GCTData"
+//#define TIME_SERVER_URL "https://www.worldtimeserver.com/handlers/GetData.ashx?action=GCTData"
 
 #define OFFLINE_SECOND_MI 1200
 #define OFFLINE_SECOND_HB 1200
@@ -247,7 +250,7 @@ int CG320::Init(int addr, int com, bool open_com, bool first, int busfd)
     }
 
     if ( open_com ) {
-        port = szPort[com-1]; // COM1~4 <==> /dev/ttyS0~3 or ttyUSB0~3
+        port = szPort[com-1]; // COM1~4 <==> /dev/ttyS1~4 or ttyUSB0~3
         sprintf(szbuf,"port = %s \n",port);
         printf(szbuf);
 
@@ -279,6 +282,13 @@ int CG320::Init(int addr, int com, bool open_com, bool first, int busfd)
     WriteWhiteList(sizeof(testbuf_tmp)/8, testbuf_tmp);
     usleep(5000000);
 */    //getchar();
+
+	printf("GPIO : wiringPiSetup()\n");
+	wiringPiSetup();
+	printf("GPIO : set OUTPUT\n");
+	pinMode(GP6A0, OUTPUT);
+	printf("GPIO : set LOW\n");
+	digitalWrite(GP6A0, LOW);
 
     m_wl_count = 0;
     m_wl_checksum = 0;
@@ -1491,7 +1501,7 @@ void CG320::GetMAC()
     FILE *fd = NULL;
 
     // get MAC address
-    fd = popen("uci get network.lan_dev.macaddr", "r");
+    fd = popen("cat /sys/class/net/eth0/address", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -1513,7 +1523,7 @@ bool CG320::GetDLConfig()
     FILE *pFile = NULL;
 
     // get sms_server
-    pFile = popen("uci get dlsetting.@sms[0].sms_server", "r");
+    pFile = popen("/home/linaro/bin/parameter.sh get sms_server", "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
         return false;
@@ -1523,7 +1533,7 @@ bool CG320::GetDLConfig()
     m_dl_config.m_sms_server[strlen(m_dl_config.m_sms_server)-1] = 0; // clean \n
     printf("SMS Server = %s\n", m_dl_config.m_sms_server);
     // get sms server port
-    pFile = popen("uci get dlsetting.@sms[0].sms_port", "r");
+    pFile = popen("/home/linaro/bin/parameter.sh get sms_port", "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
         return false;
@@ -1534,7 +1544,7 @@ bool CG320::GetDLConfig()
     printf("SMS Port = %d\n", m_dl_config.m_sms_port);
 
     // get sample_time
-    /*pFile = popen("uci get dlsetting.@sms[0].sample_time", "r");
+    /*pFile = popen("/home/linaro/bin/parameter.sh get sample_time", "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
         return false;
@@ -1544,7 +1554,7 @@ bool CG320::GetDLConfig()
     sscanf(buf, "%d", &m_dl_config.m_sample_time);
     printf("Sample time (Min.) = %d\n", m_dl_config.m_sample_time);*/
     // get MI mi_delay_time
-    pFile = popen("uci get dlsetting.@sms[0].delay_time_1", "r");
+    pFile = popen("/home/linaro/bin/parameter.sh get delay_time_1", "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
         return false;
@@ -1554,7 +1564,7 @@ bool CG320::GetDLConfig()
     sscanf(buf, "%d", &m_dl_config.m_delay_time_1);
     printf("MI delay time (us.) = %d\n", m_dl_config.m_delay_time_1);
     // get Hybrid hb_delay_time
-    pFile = popen("uci get dlsetting.@sms[0].delay_time_2", "r");
+    pFile = popen("/home/linaro/bin/parameter.sh get delay_time_2", "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
         return false;
@@ -1566,7 +1576,7 @@ bool CG320::GetDLConfig()
 
     // cancel, set it in init()
     // get serial port
-/*    pFile = popen("uci get dlsetting.@comport[0].inverter_port", "r");
+/*    pFile = popen("/home/linaro/bin/parameter.sh get inverter_port", "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
         return false;
@@ -1576,7 +1586,7 @@ bool CG320::GetDLConfig()
     sscanf(buf, "COM%d", &m_dl_config.m_inverter_port);
     printf("Serial Port = %d\n", m_dl_config.m_inverter_port);*/
     // get baud
-    sprintf(cmd, "uci get dlsetting.@comport[0].com%d_baud", m_dl_config.m_inverter_port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_baud", m_dl_config.m_inverter_port);
     pFile = popen(cmd, "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
@@ -1587,7 +1597,7 @@ bool CG320::GetDLConfig()
     sscanf(buf, "%d", &m_dl_config.m_inverter_baud);
     printf("Baud rate = %d\n", m_dl_config.m_inverter_baud);
     // get data bits
-    sprintf(cmd, "uci get dlsetting.@comport[0].com%d_data_bits", m_dl_config.m_inverter_port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_data_bits", m_dl_config.m_inverter_port);
     pFile = popen(cmd, "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
@@ -1598,7 +1608,7 @@ bool CG320::GetDLConfig()
     sscanf(buf, "%d", &m_dl_config.m_inverter_data_bits);
     printf("Data bits = %d\n", m_dl_config.m_inverter_data_bits);
     // get parity
-    sprintf(cmd, "uci get dlsetting.@comport[0].com%d_parity", m_dl_config.m_inverter_port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_parity", m_dl_config.m_inverter_port);
     pFile = popen(cmd, "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
@@ -1609,7 +1619,7 @@ bool CG320::GetDLConfig()
     m_dl_config.m_inverter_parity[strlen(m_dl_config.m_inverter_parity)-1] = 0; // clean \n
     printf("Parity = %s\n", m_dl_config.m_inverter_parity);
     // get stop bits
-    sprintf(cmd, "uci get dlsetting.@comport[0].com%d_stop_bits", m_dl_config.m_inverter_port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_stop_bits", m_dl_config.m_inverter_port);
     pFile = popen(cmd, "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
@@ -1632,10 +1642,21 @@ bool CG320::SetPath()
     char tmpbuf[256] = {0};
     struct stat st;
     bool mk_tmp_dir = false;
+	FILE *pFile = NULL;
 
     // set root path (XML & BMS & SYSLOG in the same dir.)
     if ( stat(USB_DEV, &st) == 0 ) { /*linux usb storage detect*/
-        strcpy(m_dl_path.m_root_path, USB_PATH); // set usb
+	pFile = popen("df | grep /dev/sda1 | awk '{print $6}'", "r");
+	    if ( pFile == NULL ) {
+		printf("popen fail!\n");
+		return false;
+	    }
+	    fgets(m_dl_path.m_usb_path, 128, pFile);
+	    pclose(pFile);
+	    m_dl_path.m_usb_path[strlen(m_dl_path.m_usb_path)-1] = 0; // clean \n
+	    printf("USB path = %s\n", m_dl_path.m_usb_path);
+
+        strcpy(m_dl_path.m_root_path, m_dl_path.m_usb_path); // set usb
         m_sys_error  &= ~SYS_0001_No_USB;
         mk_tmp_dir = true;
     } else if ( stat(SDCARD_PATH, &st) == 0 ) {
@@ -1767,7 +1788,7 @@ bool CG320::SetPath()
     //printf("m_syslog_path = %s\n", m_dl_path.m_syslog_path);
 
     if ( mk_tmp_dir ) {
-        // create /tmp XML dir
+        // create tmp XML dir
         sprintf(tmpbuf, "%s/XML", DEF_PATH);
         if ( stat(tmpbuf, &st) == -1 ) {
             printf("%s not exist, run mkdir!\n", tmpbuf);
@@ -1777,7 +1798,7 @@ bool CG320::SetPath()
                 printf("mkdir %s OK\n", tmpbuf);
         }
 
-        // create /tmp LOG dir
+        // create tmp LOG dir
         sprintf(tmpbuf, "%s/XML/LOG", DEF_PATH);
         if ( stat(tmpbuf, &st) == -1 ) {
             printf("%s not exist, run mkdir!\n", tmpbuf);
@@ -1786,7 +1807,7 @@ bool CG320::SetPath()
             else
                 printf("mkdir %s OK\n", tmpbuf);
         }
-        // create /tmp LOG date dir
+        // create tmp LOG date dir
         sprintf(tmpbuf, "%s/XML/LOG/%4d%02d%02d", DEF_PATH, 1900+m_st_time->tm_year, 1+m_st_time->tm_mon, m_st_time->tm_mday);
         if ( stat(tmpbuf, &st) == -1 ) {
             printf("%s not exist, run mkdir!\n", tmpbuf);
@@ -1796,7 +1817,7 @@ bool CG320::SetPath()
                 printf("mkdir %s OK\n", tmpbuf);
         }
 
-        // create /tmp ERRLOG dir
+        // create tmp ERRLOG dir
         sprintf(tmpbuf, "%s/XML/ERRLOG", DEF_PATH);
         if ( stat(tmpbuf, &st) == -1 ) {
             printf("%s not exist, run mkdir!\n", tmpbuf);
@@ -1805,7 +1826,7 @@ bool CG320::SetPath()
             else
                 printf("mkdir %s OK\n", tmpbuf);
         }
-        // create /tmp ERRLOG date dir
+        // create tmp ERRLOG date dir
         sprintf(tmpbuf, "%s/XML/ERRLOG/%4d%02d%02d", DEF_PATH, 1900+m_st_time->tm_year, 1+m_st_time->tm_mon, m_st_time->tm_mday);
         if ( stat(tmpbuf, &st) == -1 ) {
             printf("%s not exist, run mkdir!\n", tmpbuf);
@@ -1815,7 +1836,7 @@ bool CG320::SetPath()
                 printf("mkdir %s OK\n", tmpbuf);
         }
 
-        // create /tmp BMS dir
+        // create tmp BMS dir
         sprintf(tmpbuf, "%s/BMS", DEF_PATH);
         if ( stat(tmpbuf, &st) == -1 ) {
             printf("%s not exist, run mkdir!\n", tmpbuf);
@@ -1824,7 +1845,7 @@ bool CG320::SetPath()
             else
                 printf("mkdir %s OK\n", tmpbuf);
         }
-        // create /tmp BMS date dir
+        // create tmp BMS date dir
         /*sprintf(tmpbuf, "%s/BMS/%4d%02d%02d", DEF_PATH, 1900+m_st_time->tm_year, 1+m_st_time->tm_mon, m_st_time->tm_mday);
         if ( stat(tmpbuf, &st) == -1 ) {
             printf("%s not exist, run mkdir!\n", tmpbuf);
@@ -1834,7 +1855,7 @@ bool CG320::SetPath()
                 printf("mkdir %s OK\n", tmpbuf);
         }*/
 
-        // create /tmp SYSLOG dir
+        // create tmp SYSLOG dir
         sprintf(tmpbuf, "%s/SYSLOG", DEF_PATH);
         if ( stat(tmpbuf, &st) == -1 ) {
             printf("%s not exist, run mkdir!\n", tmpbuf);
@@ -3458,7 +3479,7 @@ int CG320::StartRegisterProcess()
         }
 	}*/
 
-	char byMOD = DefaultMODValue;
+	int byMOD = DefaultMODValue;
 	//m_snCount = 0;
 
 	if (m_snCount==0) {
@@ -8019,16 +8040,16 @@ bool CG320::GetTimezone()
     m_do_get_TZ = true;
     printf("\n########### Get Timezone ###########\n");
     // get timezone from ip
-    sprintf(buf, "curl -k %s --max-time 30 > /tmp/timezone", TIMEZONE_URL);
+    sprintf(buf, "curl -k %s --max-time 30 > /run/user/1000/timezone", TIMEZONE_URL);
     //printf("cmd = %s\n", buf);
     system(buf);
-    pFile = fopen("/tmp/timezone", "rb");
+    pFile = fopen("/run/user/1000/timezone", "rb");
     if ( pFile == NULL ) {
-        printf("Open /tmp/timezone fail!\n");
+        printf("Open /run/user/1000/timezone fail!\n");
         return false;
     }
     fread(buf, 1024, 1, pFile);
-    printf("Debug : /tmp/timezone = %s\n", buf);
+    printf("Debug : /run/user/1000/timezone = %s\n", buf);
     fclose(pFile);
 
     // find timezone
@@ -8054,13 +8075,13 @@ bool CG320::GetTimezone()
         } else if ( (tmp[i] == '+') || (tmp[i] == '-') ) { // + or - , copy
             timezone[j] = tmp[i];
             j++;
-            /*if ( ('0' <= tmp[i+1]) && (tmp[i+1] <= '9') ) { // next byte is number 0 ~ 9, copy
-                timezone[j] = tmp[i];
-                j++;
-            } else { // next byte not number, set .
-                timezone[j] = '.';
-                j++;
-            }*/
+            //if ( ('0' <= tmp[i+1]) && (tmp[i+1] <= '9') ) { // next byte is number 0 ~ 9, copy
+            //    timezone[j] = tmp[i];
+            //    j++;
+            //} else { // next byte not number, set .
+            //    timezone[j] = '.';
+            //    j++;
+            //}
         } else if ( tmp[i] == '_' ) { // _ , set to space
             timezone[j] = ' ';
             j++;
@@ -8073,77 +8094,42 @@ bool CG320::GetTimezone()
     sprintf(tmp, "DataLogger GetTimezone() : timezone = [%s]", timezone);
     SaveLog(tmp, log_time);
 
-    if ( strlen(timezone) == 0 )
-        return false;
-
-    // get time offset from openwrt if match timezone
-    sprintf(buf, "curl -k %s --max-time 30 | grep -i \"%s\" > /tmp/time_offset", TIME_OFFSET_URL, timezone);
-    //printf("cmd = %s\n", buf);
-    system(buf);
-    pFile = fopen("/tmp/time_offset", "rb");
-    if ( pFile == NULL ) {
-        printf("Open /tmp/time_offset fail!\n");
+    if ( strlen(timezone) == 0 ) {
         return false;
     }
-    memset(buf, 0x00, 1024);
-    fread(buf, 1024, 1, pFile);
-    printf("Debug : /tmp/time_offset = %s\n", buf);
-    fclose(pFile);
-    if ( strlen(buf) == 0 )
-        return false;
 
-    // parser timezone & offset from /tmp/time_offset
-    index = NULL;
-    index = strchr(buf, '\''); // find first "'"
-    if ( index == NULL ) {
-        printf("start index ' not found!\n");
-        return false;
-    }
-    index++; // set to next char
-    // set zonename
-    i = 0;
-    while ( (*index != '\'') && (*index != NULL) && (i < 128) ) {
-        zonename[i] = *index;
-        index++;
-        i++;
-    }
-    printf("Debug : zonename[] = %s\n", zonename);
-    index++; // set to next char
-    index = strchr(index, '\''); // find third "'"
-    index++; // set to next char
-    // set time_offset
-    i = 0;
-    while ( (*index != '\'') && (*index != NULL) && (i < 128) ) {
-        time_offset[i] = *index;
-        index++;
-        i++;
-    }
-    printf("Debug : time_offset[] = %s\n", time_offset);
-    sprintf(tmp, "DataLogger GetTimezone() : time_offset = [%s]", time_offset);
-    SaveLog(tmp, log_time);
-
-    SetTimezone(zonename, time_offset);
-    m_do_get_TZ = false;
-
-    usleep(1000000);
-    GetNTPTime();
+	// check timezone list of debian
+	sprintf(buf, "timedatectl list-timezones | grep %s", timezone);
+	pFile = popen(buf, "r");
+	if ( pFile == NULL ) {
+		printf("popen fail!\n");
+		return false;
+	}
+	fgets(zonename, 128, pFile);
+	pclose(pFile);
+	if (strlen(zonename) > 1) {
+		zonename[strlen(zonename)-1] = 0; // clean \n
+		printf("zonename = %s\n", zonename);
+		sprintf(tmp, "DataLogger GetTimezone() : zonename = [%s]", zonename);
+		SaveLog(tmp, log_time);
+		SetTimezone(zonename);
+		m_do_get_TZ = false;
+		usleep(1000000);
+		GetNTPTime();
+	}
 
     printf("####################################\n");
 
     return true;
 }
 
-// zonename : ex Asia/Taipei, timazone : ex CST-8
-void CG320::SetTimezone(char *zonename, char *timazone)
+// zonename : ex Asia/Taipei in Debian timezone list
+void CG320::SetTimezone(char *zonename)
 {
     char buf[128] = {0};
 
-    sprintf(buf, "uci set system.@system[0].zonename='%s'", zonename);
+    sprintf(buf, "sudo timedatectl set-timezone %s", zonename);
     system(buf);
-    sprintf(buf, "uci set system.@system[0].timezone='%s'", timazone);
-    system(buf);
-    system("uci commit system");
-    system("/etc/init.d/system restart");
 
     return;
 }
@@ -8166,59 +8152,12 @@ void CG320::GetLocalTime()
 
 void CG320::GetNTPTime()
 {
-    char buf[1024] = {0};
-    char NTP_SERVER[4][256] = {0};
-    int PID = 0, i = 0;
-    FILE *fd = NULL;
-
     printf("############ Get NTP Time ############\n");
 
-    fd = popen("uci get system.ntp.server", "r");
-    if ( fd == NULL ) {
-        printf("GetNTPTime server fail!\n");
-        return;
-    }
-    fread(buf, 1, 1024, fd);
-    pclose(fd);
-
-    if ( strlen(buf) == 0 ) {
-        printf("GetNTPTime server empty!\n");
-        return;
-    }
-
-    sscanf(buf, "%s %s %s %s", NTP_SERVER[0], NTP_SERVER[1], NTP_SERVER[2], NTP_SERVER[3]);
-    printf("NTP_SERVER[0] = %s\n", NTP_SERVER[0]);
-    printf("NTP_SERVER[1] = %s\n", NTP_SERVER[1]);
-    printf("NTP_SERVER[2] = %s\n", NTP_SERVER[2]);
-    printf("NTP_SERVER[3] = %s\n", NTP_SERVER[3]);
-
-    for ( i = 0; i < 4; i++) {
-        sprintf(buf, "ntpd -n -d -q -p %s &", NTP_SERVER[i]);
-        system(buf);
-        printf("wait 10s for ntpd end\n");
-        usleep(10000000);
-
-        // check before ntpd process, if exist, kill it!
-        sprintf(buf, "ps | grep \"ntpd -n -d -q -p %s\" | grep -v grep | awk '{print $1}'", NTP_SERVER[i]);
-        fd = popen(buf, "r");
-        if ( fd == NULL ) {
-            printf("GetNTPTime check ntpd fail!\n");
-            break;
-        }
-        memset(buf, 0, 1024);
-        fread(buf, 1, 1024, fd);
-        pclose(fd);
-
-        if ( strlen(buf) == 0 ) {
-            printf("GetNTPTime check ntpd empty!\n");
-            m_do_set_RTC = 1;
-            break;
-        }
-
-        sscanf(buf, "%d", &PID);
-        sprintf(buf, "kill %d", PID);
-        system(buf);
-    }
+	system("sudo service ntp stop");
+	system("sudo service ntp start");
+	usleep(10000000);
+	GetLocalTime();
 
     printf("############ Get NTP END #############\n");
 
@@ -9310,15 +9249,15 @@ bool CG320::SaveLogXML(bool first, bool last)
     int filesize = 0, offset = 0, ret = 0;
 
     if ( first ) {
-        fd = fopen("/tmp/tmplog", "wb");
+        fd = fopen("/run/user/1000/tmplog", "wb");
         if ( fd != NULL ) {
             fwrite("<records>", 1, 9, fd);
             filesize = 9;
         }
     } else {
-        stat("/tmp/tmplog", &filest);
+        stat("/run/user/1000/tmplog", &filest);
         filesize = filest.st_size;
-        fd = fopen("/tmp/tmplog", "ab");
+        fd = fopen("/run/user/1000/tmplog", "ab");
     }
 
     if ( last ) {
@@ -9334,8 +9273,8 @@ bool CG320::SaveLogXML(bool first, bool last)
         //printf("Log filesize = %d\n", filesize);
         fclose(fd);
     } else {
-        SaveLog((char *)"DataLogger SaveLogXML() : open /tmp/tmplog Fail", m_st_time);
-        printf("open /tmp/tmplog Fail!\n");
+        SaveLog((char *)"DataLogger SaveLogXML() : open /run/user/1000/tmplog Fail", m_st_time);
+        printf("open /run/user/1000/tmplog Fail!\n");
         return false;
     }
 
@@ -9349,29 +9288,29 @@ bool CG320::SaveLogXML(bool first, bool last)
     }
 
     // copy file to target
-    sprintf(buf, "cp /tmp/tmplog %s", m_log_filename);
+    sprintf(buf, "cp /run/user/1000/tmplog %s", m_log_filename);
     ret = system(buf);
     if ( ret == 0 ) {
         sprintf(buf, "DataLogger SaveLogXML() : write %s OK", m_log_filename);
         SaveLog(buf, m_st_time);
-        if ( strstr(m_log_filename, USB_PATH) )
+        if ( strstr(m_log_filename, m_dl_path.m_usb_path) )
             m_sys_error  &= ~SYS_0002_Save_USB_Fail;
         return true;
     } else {
         sprintf(buf, "DataLogger SaveLogXML() : write %s Fail", m_log_filename);
         SaveLog(buf, m_st_time);
-        if ( strstr(m_log_filename, USB_PATH) )
+        if ( strstr(m_log_filename, m_dl_path.m_usb_path) )
             m_sys_error |= SYS_0002_Save_USB_Fail;
     }
 
     // if copy file to storage fail, then copy to tmp
     if ( strstr(m_log_filename, DEF_PATH) == NULL ) {
         strcpy(tmp, DEF_PATH);
-        if ( strstr(m_log_filename, USB_PATH) != NULL )
-            offset = strlen(USB_PATH);
+        if ( strstr(m_log_filename, m_dl_path.m_usb_path) != NULL )
+            offset = strlen(m_dl_path.m_usb_path);
         // save to tmp
         strcat(tmp, m_log_filename+offset);
-        sprintf(buf, "cp /tmp/tmplog %s", tmp);
+        sprintf(buf, "cp /run/user/1000/tmplog %s", tmp);
         ret = system(buf);
         if ( ret == 0 ) {
             SaveLog((char *)"DataLogger SaveLogXML() : write to tmp OK", m_st_time);
@@ -9979,15 +9918,15 @@ bool CG320::SaveErrorLogXML(bool first, bool last)
     int filesize = 0, offset = 0, ret = 0;
 
     if ( first ) {
-        fd = fopen("/tmp/tmperrlog", "wb");
+        fd = fopen("/run/user/1000/tmperrlog", "wb");
         if ( fd != NULL ) {
             fwrite("<records>", 1, 9, fd);
             filesize = 9;
         }
     } else {
-        stat("/tmp/tmperrlog", &filest);
+        stat("/run/user/1000/tmperrlog", &filest);
         filesize = filest.st_size;
-        fd = fopen("/tmp/tmperrlog", "ab");
+        fd = fopen("/run/user/1000/tmperrlog", "ab");
     }
 
     if ( last ) {
@@ -10003,8 +9942,8 @@ bool CG320::SaveErrorLogXML(bool first, bool last)
         //printf("Errlog filesize = %d\n", filesize);
         fclose(fd);
     } else {
-        SaveLog((char *)"DataLogger SaveErrorLogXML() : open /tmp/tmperrlog Fail", m_st_time);
-        printf("open /tmp/tmperrlog Fail!\n");
+        SaveLog((char *)"DataLogger SaveErrorLogXML() : open /run/user/1000/tmperrlog Fail", m_st_time);
+        printf("open /run/user/1000/tmperrlog Fail!\n");
         return false;
     }
 
@@ -10018,29 +9957,29 @@ bool CG320::SaveErrorLogXML(bool first, bool last)
     }
 
     // copy file to target
-    sprintf(buf, "cp /tmp/tmperrlog %s", m_errlog_filename);
+    sprintf(buf, "cp /run/user/1000/tmperrlog %s", m_errlog_filename);
     ret = system(buf);
     if ( ret == 0 ) {
         sprintf(buf, "DataLogger SaveErrorLogXML() : write %s OK", m_errlog_filename);
         SaveLog(buf, m_st_time);
-        if ( strstr(m_errlog_filename, USB_PATH) )
+        if ( strstr(m_errlog_filename, m_dl_path.m_usb_path) )
             m_sys_error  &= ~SYS_0002_Save_USB_Fail;
         return true;
     } else {
         sprintf(buf, "DataLogger SaveErrorLogXML() : write %s Fail", m_errlog_filename);
         SaveLog(buf, m_st_time);
-        if ( strstr(m_errlog_filename, USB_PATH) )
+        if ( strstr(m_errlog_filename, m_dl_path.m_usb_path) )
             m_sys_error |= SYS_0002_Save_USB_Fail;
     }
 
     // if copy file to storage fail, then copy to tmp
     if ( strstr(m_errlog_filename, DEF_PATH) == NULL ) {
         strcpy(tmp, DEF_PATH);
-        if ( strstr(m_errlog_filename, USB_PATH) != NULL )
-            offset = strlen(USB_PATH);
+        if ( strstr(m_errlog_filename, m_dl_path.m_usb_path) != NULL )
+            offset = strlen(m_dl_path.m_usb_path);
         // save to tmp
         strcat(tmp, m_errlog_filename+offset);
-        sprintf(buf, "cp /tmp/tmperrlog %s", tmp);
+        sprintf(buf, "cp /run/user/1000/tmperrlog %s", tmp);
         ret = system(buf);
         if ( ret == 0 ) {
             SaveLog((char *)"DataLogger SaveErrorLogXML() : write to tmp OK", m_st_time);
@@ -10070,15 +10009,15 @@ bool CG320::SaveEnvXML(bool first, bool last)
     int filesize = 0, offset = 0, ret = 0;
 
     if ( first ) {
-        fd = fopen("/tmp/tmpenv", "wb");
+        fd = fopen("/run/user/1000/tmpenv", "wb");
         if ( fd != NULL ) {
             fwrite("<records>", 1, 9, fd);
             filesize = 9;
         }
     } else {
-        stat("/tmp/tmpenv", &filest);
+        stat("/run/user/1000/tmpenv", &filest);
         filesize = filest.st_size;
-        fd = fopen("/tmp/tmpenv", "ab");
+        fd = fopen("/run/user/1000/tmpenv", "ab");
     }
 
     if ( last ) {
@@ -10094,8 +10033,8 @@ bool CG320::SaveEnvXML(bool first, bool last)
         //printf("Log filesize = %d\n", filesize);
         fclose(fd);
     } else {
-        SaveLog((char *)"CG320 SaveEnvXML() : open /tmp/tmpenv Fail", m_st_time);
-        printf("open /tmp/tmpenv Fail!\n");
+        SaveLog((char *)"CG320 SaveEnvXML() : open /run/user/1000/tmpenv Fail", m_st_time);
+        printf("open /run/user/1000/tmpenv Fail!\n");
         return false;
     }
 
@@ -10109,7 +10048,7 @@ bool CG320::SaveEnvXML(bool first, bool last)
     }
 
     // copy file to target
-    sprintf(buf, "cp /tmp/tmpenv %s", m_env_filename);
+    sprintf(buf, "cp /run/user/1000/tmpenv %s", m_env_filename);
     ret = system(buf);
     if ( ret == 0 ) {
         sprintf(buf, "CG320 SaveEnvXML() : write %s OK", m_env_filename);
@@ -10127,11 +10066,11 @@ bool CG320::SaveEnvXML(bool first, bool last)
     // if copy file to storage fail, then copy to tmp
     if ( strstr(m_env_filename, DEF_PATH) == NULL ) {
         strcpy(tmp, DEF_PATH);
-        if ( strstr(m_env_filename, USB_PATH) != NULL )
-            offset = strlen(USB_PATH);
+        if ( strstr(m_env_filename, m_dl_path.m_usb_path) != NULL )
+            offset = strlen(m_dl_path.m_usb_path);
         // save to tmp
         strcat(tmp, m_env_filename+offset);
-        sprintf(buf, "cp /tmp/tmpenv %s", tmp);
+        sprintf(buf, "cp /run/user/1000/tmpenv %s", tmp);
         ret = system(buf);
         if ( ret == 0 ) {
             SaveLog((char *)"CG320 SaveEnvXML() : write to tmp OK", m_st_time);
@@ -10173,28 +10112,28 @@ bool CG320::SaveBMS()
         if ( fwrite(m_bms_mainbuf, 1, strlen(m_bms_mainbuf), pFile) ) {
             sprintf(buf, "DataLogger SaveBMS() : write %s OK", m_bms_filename);
             SaveLog(buf, m_st_time);
-            if ( strstr(m_log_filename, USB_PATH) )
+            if ( strstr(m_log_filename, m_dl_path.m_usb_path) )
                 m_sys_error  &= ~SYS_0002_Save_USB_Fail;
             fclose(pFile);
             return true;
         } else {
             sprintf(buf, "DataLogger SaveBMS() : write %s Fail", m_bms_filename);
             SaveLog(buf, m_st_time);
-            if ( strstr(m_log_filename, USB_PATH) )
+            if ( strstr(m_log_filename, m_dl_path.m_usb_path) )
                 m_sys_error  |= SYS_0002_Save_USB_Fail;
             fclose(pFile);
         }
     } else {
         sprintf(buf, "DataLogger SaveBMS() : open %s Fail", m_bms_filename);
         SaveLog(buf, m_st_time);
-        if ( strstr(m_log_filename, USB_PATH) )
+        if ( strstr(m_log_filename, m_dl_path.m_usb_path) )
             m_sys_error  |= SYS_0002_Save_USB_Fail;
     }
 
     if ( strstr(m_bms_filename, DEF_PATH) == NULL ) {
         strcpy(buf, DEF_PATH);
-        if ( strstr(m_bms_filename, USB_PATH) != NULL )
-            offset = strlen(USB_PATH);
+        if ( strstr(m_bms_filename, m_dl_path.m_usb_path) != NULL )
+            offset = strlen(m_dl_path.m_usb_path);
         // save to tmp
         strcat(buf, m_bms_filename+offset);
 
@@ -10237,7 +10176,7 @@ bool CG320::WriteMIListXML()
 
     //GetLocalTime(); // cancel, GetData set time already
 
-    sprintf(buf, "/tmp/tmpMIList");
+    sprintf(buf, "/run/user/1000/tmpMIList");
 
     if ( m_first )
         pFile = fopen(buf, "wb");
@@ -10449,14 +10388,14 @@ bool CG320::WriteMIListXML()
 
     if ( m_last ) {
         //system("sync");
-        stat("/tmp/tmpMIList", &filest);
+        stat("/run/user/1000/tmpMIList", &filest);
         listsize = filest.st_size;
         //printf("listsize = %d\n", listsize);
         if ( m_milist_size != listsize ) {
             // clean old MIList
             printf("clean old MIList\n");
-            system("rm /tmp/MIList_*");
-            sprintf(buf, "cp /tmp/tmpMIList /tmp/MIList_%4d%02d%02d_%02d%02d00",
+            system("rm /run/user/1000/MIList_*");
+            sprintf(buf, "cp /run/user/1000/tmpMIList /run/user/1000/MIList_%4d%02d%02d_%02d%02d00",
                     1900+m_st_time->tm_year, 1+m_st_time->tm_mon, m_st_time->tm_mday,
                     m_st_time->tm_hour, m_st_time->tm_min);
             printf("run command : \n%s\n", buf);

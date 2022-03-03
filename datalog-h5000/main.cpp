@@ -8,7 +8,7 @@
 #include <time.h>
 
 #define VERSION         "2.8.4"
-#define MODEL_LIST_PATH "/usr/home/ModelList"
+#define MODEL_LIST_PATH "/home/linaro/bin/ModelList"
 #define MODEL_NUM       1020 //255*4
 
 CG320 *pg320 = NULL;
@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
     time_t sys_current_time = 0, get_data_time = 0;
     struct tm *sys_st_time = NULL;
 
-    char opt;
+    int opt;
     while( (opt = getopt(argc, argv, "vVtT")) != -1 )
     {
         switch (opt)
@@ -172,7 +172,7 @@ bool GetConfig()
     FILE *pFile = NULL;
 
     // get sample_time
-    pFile = popen("uci get dlsetting.@sms[0].sample_time", "r");
+    pFile = popen("/home/linaro/bin/parameter.sh get sample_time", "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
         return false;
@@ -283,7 +283,7 @@ void Init()
                             printf("%d Darfon init start~\n", MList[i].addr);
                             if ( COM_OPENED[MList[i].port-1] == false ) {
                                 printf("Do open com port %d init\n", MList[i].port);
-                                initenv((char *)"/usr/home/G320.ini");
+                                initenv((char *)"/home/linaro/bin/G320.ini");
                                 if ( pg320 == NULL )
                                     pg320 = new CG320;
                                 BUS_FD[MList[i].port-1] = pg320->Init(MList[i].devid, MList[i].port, true, MList[i].first, 0);
@@ -294,7 +294,7 @@ void Init()
                             } else {
                                 if ( MList[i].init == 0 ) {
                                     printf("Do init\n");
-                                    initenv((char *)"/usr/home/G320.ini");
+                                    initenv((char *)"/home/linaro/bin/G320.ini");
                                     if ( pg320 == NULL )
                                         pg320 = new CG320;
                                     if ( pg320->Init(MList[i].devid, MList[i].port, false, false, BUS_FD[MList[i].port-1]) == 0 ) {
@@ -309,7 +309,7 @@ void Init()
                             printf("%d CyberPower init start~\n", MList[i].addr);
                             if ( COM_OPENED[MList[i].port-1] == false ) {
                                 printf("Do open com port %d init\n", MList[i].port);
-                                initenv((char *)"/usr/home/G320.ini");
+                                initenv((char *)"/home/linaro/bin/G320.ini");
                                 if ( pcyberpower == NULL )
                                     pcyberpower = new CyberPower;
                                 BUS_FD[MList[i].port-1] = pcyberpower->Init(MList[i].port, true, MList[i].first, 0);
@@ -320,7 +320,7 @@ void Init()
                             } else {
                                 if ( MList[i].init == 0 ) {
                                     printf("Do init\n");
-                                    initenv((char *)"/usr/home/G320.ini");
+                                    initenv((char *)"/home/linaro/bin/G320.ini");
                                     if ( pcyberpower == NULL )
                                         pcyberpower = new CyberPower;
                                     if ( pcyberpower->Init(MList[i].port, false, false, BUS_FD[MList[i].port-1]) == 0 ) {
@@ -334,7 +334,7 @@ void Init()
                             printf("%d ADtekCS1 init start~\n", MList[i].addr);
                             if ( COM_OPENED[MList[i].port-1] == false ) {
                                 printf("Do open com port %d init\n", MList[i].port);
-                                initenv((char *)"/usr/home/G320.ini");
+                                initenv((char *)"/home/linaro/bin/G320.ini");
                                 if ( adtekcs1 == NULL )
                                     adtekcs1 = new ADtek_CS1;
                                 BUS_FD[MList[i].port-1] = adtekcs1->Init(MList[i].port, true, MList[i].first, 0);
@@ -345,7 +345,7 @@ void Init()
                             } else {
                                 if ( MList[i].init == 0 ) {
                                     printf("Do init\n");
-                                    initenv((char *)"/usr/home/G320.ini");
+                                    initenv((char *)"/home/linaro/bin/G320.ini");
                                     if ( adtekcs1 == NULL )
                                         adtekcs1 = new ADtek_CS1;
                                     if ( adtekcs1->Init(MList[i].port, false, false, BUS_FD[MList[i].port-1]) == 0 ) {
@@ -368,7 +368,7 @@ void Init()
                                     printf("Do init\n");
                                     MList[i].init = 1;
                                     if ( MList[i].last ) {
-                                        sprintf(buf, "cp -f /tmp/tmpDeviceList /tmp/DeviceList");
+                                        sprintf(buf, "cp -f /run/user/1000/tmpDeviceList /run/user/1000/DeviceList");
                                         system(buf);
                                     }
                                 }
@@ -577,11 +577,11 @@ int GetAllData(time_t data_time)
                     // for test
                     printf("%d Test getdata start~\n", MList[i].addr);
                     if ( MList[i].first ) {
-                        pFile = fopen("/tmp/tmpDeviceList", "w");
+                        pFile = fopen("/run/user/1000/tmpDeviceList", "w");
                         if ( pFile != NULL )
                             fclose(pFile);
 
-                        pFile = fopen("/tmp/tmplog", "wb");
+                        pFile = fopen("/run/user/1000/tmplog", "wb");
                         if ( pFile != NULL ) {
                             fwrite("<records>", 1, 9, pFile);
                             sprintf(buf, "<test log id = %d>", MList[i].addr);
@@ -589,7 +589,7 @@ int GetAllData(time_t data_time)
                             fclose(pFile);
                         }
 
-                        pFile = fopen("/tmp/tmperrlog", "wb");
+                        pFile = fopen("/run/user/1000/tmperrlog", "wb");
                         if ( pFile != NULL ) {
                             fwrite("<records>", 1, 9, pFile);
                             sprintf(buf, "<test errlog id = %d>", MList[i].addr);
@@ -597,7 +597,7 @@ int GetAllData(time_t data_time)
                             fclose(pFile);
                         }
 
-                        pFile = fopen("/tmp/tmpenv", "wb");
+                        pFile = fopen("/run/user/1000/tmpenv", "wb");
                         if ( pFile != NULL ) {
                             fwrite("<records>", 1, 9, pFile);
                             sprintf(buf, "<test env id = %d>", MList[i].addr);
@@ -605,7 +605,7 @@ int GetAllData(time_t data_time)
                             fclose(pFile);
                         }
 
-                        pFile = fopen("/tmp/tmpMIList", "wb");
+                        pFile = fopen("/run/user/1000/tmpMIList", "wb");
                         if ( pFile != NULL ) {
                             fwrite("<records>\n", 1, 10, pFile);
                             sprintf(buf, "<test MIList id = %d>\n", MList[i].addr);
@@ -613,28 +613,28 @@ int GetAllData(time_t data_time)
                             fclose(pFile);
                         }
                     } else {
-                        pFile = fopen("/tmp/tmplog", "ab");
+                        pFile = fopen("/run/user/1000/tmplog", "ab");
                         if ( pFile != NULL ) {
                             sprintf(buf, "<test log id = %d>", MList[i].addr);
                             fwrite(buf, 1, strlen(buf), pFile);
                             fclose(pFile);
                         }
 
-                        pFile = fopen("/tmp/tmperrlog", "ab");
+                        pFile = fopen("/run/user/1000/tmperrlog", "ab");
                         if ( pFile != NULL ) {
                             sprintf(buf, "<test errlog id = %d>", MList[i].addr);
                             fwrite(buf, 1, strlen(buf), pFile);
                             fclose(pFile);
                         }
 
-                        pFile = fopen("/tmp/tmpenv", "ab");
+                        pFile = fopen("/run/user/1000/tmpenv", "ab");
                         if ( pFile != NULL ) {
                             sprintf(buf, "<test env id = %d>", MList[i].addr);
                             fwrite(buf, 1, strlen(buf), pFile);
                             fclose(pFile);
                         }
 
-                        pFile = fopen("/tmp/tmpMIList", "ab");
+                        pFile = fopen("/run/user/1000/tmpMIList", "ab");
                         if ( pFile != NULL ) {
                             sprintf(buf, "<test MIList id = %d>\n", MList[i].addr);
                             fwrite(buf, 1, strlen(buf), pFile);
@@ -643,7 +643,7 @@ int GetAllData(time_t data_time)
                     }
 
                     if ( MList[i].last ) {
-                        sprintf(buf, "cp -f /tmp/tmpDeviceList /tmp/DeviceList");
+                        sprintf(buf, "cp -f /run/user/1000/tmpDeviceList /run/user/1000/DeviceList");
                         system(buf);
 
                         st_time = localtime(&data_time);
@@ -651,7 +651,7 @@ int GetAllData(time_t data_time)
                             filesize = filest.st_size;
                         else
                             filesize = 0;
-                        pFile = fopen("/tmp/tmplog", "ab");
+                        pFile = fopen("/run/user/1000/tmplog", "ab");
                         if ( pFile != NULL ) {
                             fwrite("</records>", 1, 10, pFile);
                             filesize += 10;
@@ -662,7 +662,7 @@ int GetAllData(time_t data_time)
                             fclose(pFile);
                         }
                         if ( filesize > 100 ) {
-                            sprintf(buf, "cp /tmp/tmplog /tmp/test/XML/LOG/%04d%02d%02d/%02d%02d",
+                            sprintf(buf, "cp /run/user/1000/tmplog /run/user/1000/XML/LOG/%04d%02d%02d/%02d%02d",
                                         1900+st_time->tm_year, 1+st_time->tm_mon, st_time->tm_mday, st_time->tm_hour, st_time->tm_min);
                             system(buf);
                         }
@@ -682,16 +682,16 @@ int GetAllData(time_t data_time)
                             fclose(pFile);
                         }
                         if ( filesize > 100 ) {
-                            sprintf(buf, "cp /tmp/tmperrlog /tmp/test/XML/ERRLOG/%04d%02d%02d/%02d%02d",
+                            sprintf(buf, "cp /run/user/1000/tmperrlog /run/user/1000/XML/ERRLOG/%04d%02d%02d/%02d%02d",
                                         1900+st_time->tm_year, 1+st_time->tm_mon, st_time->tm_mday, st_time->tm_hour, st_time->tm_min);
                             system(buf);
                         }
 
-                        if ( stat("/tmp/tmpenv", &filest) == 0 )
+                        if ( stat("/run/user/1000/tmpenv", &filest) == 0 )
                             filesize = filest.st_size;
                         else
                             filesize = 0;
-                        pFile = fopen("/tmp/tmpenv", "ab");
+                        pFile = fopen("/run/user/1000/tmpenv", "ab");
                         if ( pFile != NULL ) {
                             fwrite("</records>", 1, 10, pFile);
                             filesize += 10;
@@ -702,16 +702,16 @@ int GetAllData(time_t data_time)
                             fclose(pFile);
                         }
                         if ( filesize > 50 ) {
-                            sprintf(buf, "cp /tmp/tmpenv /tmp/test/XML/ENV/%04d%02d%02d/%02d%02d",
+                            sprintf(buf, "cp /run/user/1000/tmpenv /run/user/1000/XML/ENV/%04d%02d%02d/%02d%02d",
                                         1900+st_time->tm_year, 1+st_time->tm_mon, st_time->tm_mday, st_time->tm_hour, st_time->tm_min);
                             system(buf);
                         }
 
-                        if ( stat("/tmp/tmpMIList", &filest) == 0 )
+                        if ( stat("/run/user/1000/tmpMIList", &filest) == 0 )
                             filesize = filest.st_size;
                         else
                             filesize = 0;
-                        pFile = fopen("/tmp/tmpMIList", "ab");
+                        pFile = fopen("/run/user/1000/tmpMIList", "ab");
                         if ( pFile != NULL ) {
                             fwrite("</records>", 1, 10, pFile);
                             filesize += 10;
@@ -724,7 +724,7 @@ int GetAllData(time_t data_time)
                         if ( filesize > 100 ) {
                             printf("tmpsize = %d, filesize = %d\n", tmpsize, filesize);
                             if ( tmpsize != filesize ) {
-                                sprintf(buf, "cp /tmp/tmpMIList /tmp/MIList_%4d%02d%02d_%02d%02d00",
+                                sprintf(buf, "cp /run/user/1000/tmpMIList /tmp/MIList_%4d%02d%02d_%02d%02d00",
                                             1900+st_time->tm_year, 1+st_time->tm_mon, st_time->tm_mday, st_time->tm_hour, st_time->tm_min);
                                 system(buf);
                                 tmpsize = filesize;

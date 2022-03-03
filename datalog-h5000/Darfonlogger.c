@@ -51,8 +51,8 @@ void DebugPrint(unsigned char *lpData,int size, char *lpHeader);
 
 
 //global option
-//char   *szPort[]={"/dev/ttyS0","/dev/ttyS1","/dev/ttyS2","/dev/ttyS3"};
-char   *szPort[]={"/dev/ttyUSB0","/dev/ttyUSB1","/dev/ttyUSB2","/dev/ttyUSB3"};
+char   *szPort[]={"/dev/ttyS1","/dev/ttyS2","/dev/ttyS3","/dev/ttyS4"};
+//char   *szPort[]={"/dev/ttyUSB0","/dev/ttyUSB1","/dev/ttyUSB2","/dev/ttyUSB3"};
 //char  g_misn[16];
 //char  g_macaddr[18];
 //int   g_fetchtime=60;
@@ -1664,7 +1664,7 @@ bool CheckCRC(unsigned char *pbuf, int tsize)
 void MyWriteAllMIDataToRAM(bool force, bool UpdateAll)
 {
 	int i,i2;
-	byte *lpdata;
+	byte *lpdata = NULL;
 
 	//char tempData[100],MIROMData[1000],LastError[50],CommunicationStatus[50];
     //char csmanvalue[20];

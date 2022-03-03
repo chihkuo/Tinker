@@ -16,5 +16,5 @@ copy dir. configs to init
 
 about bin
 mkdir /home/linaro/bin
-copy dlsetting ModelList parameter.sh to bin
+copy dlsetting ModelList parameter.sh G320.ini to bin
 copy all excutable files to bin

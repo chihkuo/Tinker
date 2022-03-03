@@ -175,7 +175,7 @@ protected:
     void    DumpHybrid2BMSInfo(unsigned char *buf);
 
     bool    GetTimezone();
-    void    SetTimezone(char *zonename, char *timazone);
+    void    SetTimezone(char *zonename);
     void    GetLocalTime();
     void    GetNTPTime();
 
