@@ -778,7 +778,7 @@ void MStartTX(int fd)
 	//getchar();
 	// add sleep to wait
 	if ( i > 0 )
-		usleep(i*1000+1000);
+		usleep(i*1000+3000);
 		//usleep(40000);
 	else
 		usleep(1000);
