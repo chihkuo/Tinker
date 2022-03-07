@@ -8158,6 +8158,7 @@ void CG320::GetNTPTime()
 	system("sudo service ntp start");
 	usleep(10000000);
 	GetLocalTime();
+	m_do_set_RTC = true;
 
     printf("############ Get NTP END #############\n");
 
