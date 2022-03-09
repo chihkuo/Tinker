@@ -1,34 +1,50 @@
 #!/bin/bash
-# ap boot
+# client boot
 
-sudo rm -f /home/linaro/clientboot.txt
-sudo su - -c "date > /home/linaro/apboot.txt"
+sudo systemctl stop hostapd.service
+sudo systemctl stop dnsmqsq.service
 
-sudo cp -f /home/linaro/init/config/hostapd.conf /etc/hostapd
+sudo ifconfig wlan0 0.0.0.0
+
+sudo nmcli radio wifi on
+
+sudo cp -f /home/linaro/init/config/wpa_supplicant.conf /etc/wpa_supplicant/wpa_supplicant.conf
 
 echo "kill wpa_supplicant"
 sudo killall wpa_supplicant
+sleep 0.5
+echo "connect wifi ap"
+sudo /sbin/wpa_supplicant -D nl80211 -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf
+sleep 5
+echo "run dhclient"
+sudo dhclient
 
-sudo nmcli radio wifi off
-sudo ifconfig wlan0 192.168.100.1/24 up
-
-sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-sudo sysctl net.ipv4.ip_forward=1
-sudo update-alternatives --set iptables /usr/sbin/iptables-legacy
-# for ipv6
-sudo update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
-
-sudo sysctl fs.inotify.max_user_watches=1048576
-sudo systemctl daemon-reload
-sudo service systemd-resolved stop
-sudo systemctl restart dnsmasq.service
-
-sudo systemctl stop hostapd.service
-sleep 1
-sudo rfkill unblock wifi
-sudo systemctl start hostapd.service
+if [[ -e '/home/linaro/apboot.txt' ]]; then
+	echo "check network"
+	for var in $(seq 1 6)
+	do
+		sleep 5
+		sudo ping www.google.com -w 5
+		if [[ $? == 0 ]]; then
+			echo "network ok, remove apboot.txt, make clientboot.txt"
+			sudo rm -f /home/linaro/apboot.txt
+			sudo su - -c "date > /home/linaro/clientboot.txt"
+			break
+		else
+			echo "var = $var"
+			if [[ $var = 6 ]]; then
+				echo "network fail, return AP mode"
+				/home/linaro/init/setmode.sh ap
+				sync
+				/home/linaro/init/myinit.sh
+			fi
+		fi
+	done
+else
+	sudo su - -c "date > /home/linaro/clientboot.txt"
+fi
 
 echo "run stop"
-/home/linaro/init/program.sh stop
-echo "run ap"
-/home/linaro/init/program.sh ap &
+sudo /home/linaro/init/program.sh stop
+echo "run client"
+sudo /home/linaro/init/program.sh client &

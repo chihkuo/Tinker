@@ -9,7 +9,7 @@ then
 	if [ $? != 0 ]
 	then
 		echo "run DLsocket.exe"
-		/home/linaro/bin/DLsocket.exe &
+		sudo /home/linaro/bin/DLsocket.exe &
 	else
 		echo "DLsocket.exe alive"
 	fi
@@ -20,7 +20,7 @@ then
 	if [ $? != 0 ]
 	then
 		echo "run dlg320.exe"
-		/home/linaro/bin/dlg320.exe &
+		sudo /home/linaro/bin/dlg320.exe &
 	else
 		echo "dlg320.exe alive"
 	fi
@@ -31,7 +31,7 @@ then
 	if [ $? != 0 ]
 	then
 		echo "run DataProgram.exe"
-		/home/linaro/bin/DataProgram.exe &
+		sudo /home/linaro/bin/DataProgram.exe &
 	else
 		echo "DataProgram.exe alive"
 	fi
@@ -45,7 +45,7 @@ then
 	if [ $? != 0 ]
 	then
 		echo "run dlg320.exe"
-		/home/linaro/bin/dlg320.exe &
+		sudo /home/linaro/bin/dlg320.exe &
 	else
 		echo "dlg320.exe alive"
 	fi
@@ -56,7 +56,7 @@ then
 	if [ $? != 0 ]
 	then
 		echo "run DataProgram.exe"
-		/home/linaro/bin/DataProgram.exe &
+		sudo /home/linaro/bin/DataProgram.exe &
 	else
 		echo "DataProgram.exe alive"
 	fi

@@ -29,6 +29,6 @@ sudo rfkill unblock wifi
 sudo systemctl start hostapd.service
 
 echo "run stop"
-/home/linaro/init/program.sh stop
+sudo /home/linaro/init/program.sh stop
 echo "run ap"
-/home/linaro/init/program.sh ap &
+sudo /home/linaro/init/program.sh ap &

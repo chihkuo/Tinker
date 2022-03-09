@@ -45,6 +45,6 @@ else
 fi
 
 echo "run stop"
-/home/linaro/init/program.sh stop
+sudo /home/linaro/init/program.sh stop
 echo "run client"
-/home/linaro/init/program.sh client &
+sudo /home/linaro/init/program.sh client &
