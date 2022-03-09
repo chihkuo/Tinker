@@ -12,7 +12,7 @@ AR = ar
 .PHONY: all clean
 
 all:
-	$(CC) -Wall main.c ../common/libcommon.a $(LIBDIR)/modbusdrv.o $(LIBDIR)/Darfonlogger.o $(LIBDIR)/iniparser-2.17/src/dictionary.o $(LIBDIR)/iniparser-2.17/src/strlib.o $(LIBDIR)/iniparser-2.17/src/iniparser.o -lpthread -o DLsocket.exe
+	$(CC) -Wall main.c ../common/libcommon.a $(LIBDIR)/modbusdrv.o $(LIBDIR)/Darfonlogger.o $(LIBDIR)/iniparser-2.17/src/dictionary.o $(LIBDIR)/iniparser-2.17/src/strlib.o $(LIBDIR)/iniparser-2.17/src/iniparser.o -lpthread -lwiringPi -o DLsocket.exe
 
 clean:
 	rm DLsocket.exe

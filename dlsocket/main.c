@@ -7,6 +7,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <time.h>
+#include <wiringPi.h>
+
+#define GP6A0	1
 
 #include "dlsocket.h"
 
@@ -3460,7 +3463,7 @@ int main(int argc , char *argv[])
 			send(forClientSockfd, ret_buf, 8, 0);
 
 			system("/home/linaro/init/setmode.sh client");
-			system("/home/linaro/init/myinit.sh");
+			system("/home/linaro/init/myinit.sh &");
 		    } else {
 			// send ssid not found
 			ret_buf[0] = 0xFA;

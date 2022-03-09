@@ -29,7 +29,7 @@ if [[ -e '/home/linaro/apboot.txt' ]]; then
 			echo "network ok, remove apboot.txt, make clientboot.txt"
 			sudo rm -f /home/linaro/apboot.txt
 			sudo su - -c "date > /home/linaro/clientboot.txt"
-			exit 0
+			break
 		else
 			echo "var = $var"
 			if [[ $var = 6 ]]; then
@@ -43,3 +43,8 @@ if [[ -e '/home/linaro/apboot.txt' ]]; then
 else
 	sudo su - -c "date > /home/linaro/clientboot.txt"
 fi
+
+echo "run stop"
+/home/linaro/init/program.sh stop
+echo "run client"
+/home/linaro/init/program.sh client &

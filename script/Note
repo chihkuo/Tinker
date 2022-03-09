@@ -11,7 +11,7 @@ copy hostapd.conf to /etc/hostapd/
 
 #about config
 mkdir /home/linaro/init
-copy apboot.sh clientboot.sh myinit.sh setmode.sh to init
+copy apboot.sh clientboot.sh myinit.sh setmode.sh program.sh to init
 copy dir. configs to init
 
 about bin

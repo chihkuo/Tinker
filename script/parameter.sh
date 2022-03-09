@@ -47,11 +47,11 @@ fi
 if [ "$1" = "get" ]
 then
 	# get data
-	grep $2 dlsetting | awk -F= '{print $2}'
+	grep $2 /home/linaro/bin/dlsetting | awk -F= '{print $2}'
 elif [ "$1" = "set" ]
 then
 	# set data
-	sed -i "s/$2=.*/$2=$3/g" dlsetting
+	sed -i "s/$2=.*/$2=$3/g" /home/linaro/bin/dlsetting
 	echo "OK"
 else
 	echo "unknow command"

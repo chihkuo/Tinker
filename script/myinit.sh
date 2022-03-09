@@ -27,3 +27,8 @@ sudo systemctl stop hostapd.service
 sleep 1
 sudo rfkill unblock wifi
 sudo systemctl start hostapd.service
+
+echo "run stop"
+/home/linaro/init/program.sh stop
+echo "run ap"
+/home/linaro/init/program.sh ap &
