@@ -242,6 +242,7 @@ int CG320::Init(int addr, int com, bool open_com, bool first, int busfd)
     GetLocalTime();
     SetPath();
     OpenLog(m_dl_path.m_syslog_path, m_st_time);
+	SaveLog((char *)"DataLogger Init() : start", m_st_time);
 
     // get time zone
     if ( first ) {
