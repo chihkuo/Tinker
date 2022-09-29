@@ -2,7 +2,7 @@
 
 sleep 1
 
-killall -9 SWupdate.exe
+sudo killall -9 SWupdate.exe
 sleep 1
 sync
 
