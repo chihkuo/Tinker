@@ -3374,7 +3374,7 @@ int main(int argc , char *argv[])
 				if (target_index != NULL) {
 					printf("find ssid!\n");
 					printf("buf_tmpp = \n%s\n", buf_tmpp);
-					pset_fd = fopen("/home/linaro/init/config/wpa_supplicant.conf", "wb");
+					pset_fd = fopen("/home/linaro/init/configs/wpa_supplicant.conf", "wb");
 					fwrite(CONFIG_HEADER, strlen(CONFIG_HEADER), 1, pset_fd);
 					sprintf(strtmp, "\tssid=\"%s\"\n", ssid);
 					fwrite(strtmp, strlen(strtmp), 1, pset_fd);
