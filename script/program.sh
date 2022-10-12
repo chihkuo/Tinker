@@ -36,6 +36,16 @@ then
 		echo "DataProgram.exe alive"
 	fi
 
+	sleep 30
+
+	ps -ax | grep SWupdate.exe | grep -v grep
+	if [ $? != 0 ]
+	then
+		echo "run SWupdate.exe"
+		sudo /home/linaro/bin/SWupdate.exe &
+	else
+		echo "SWupdate.exe alive"
+	fi
 fi
 
 if [ "$1" = "client" ]
@@ -60,10 +70,21 @@ then
 	else
 		echo "DataProgram.exe alive"
 	fi
+
+	sleep 30
+
+	ps -ax | grep SWupdate.exe | grep -v grep
+	if [ $? != 0 ]
+	then
+		echo "run SWupdate.exe"
+		sudo /home/linaro/bin/SWupdate.exe &
+	else
+		echo "SWupdate.exe alive"
+	fi
 fi
 
 if [ "$1" = "stop" ]
 then
 	echo "stop"
-	sudo killall -9 DataProgram.exe dlg320.exe DLsocket.exe
+	sudo killall -9 SWupdate.exe DataProgram.exe dlg320.exe DLsocket.exe
 fi
