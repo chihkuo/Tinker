@@ -4,7 +4,7 @@
 sudo rm -f /home/linaro/clientboot.txt
 sudo su - -c "date > /home/linaro/apboot.txt"
 
-sudo cp -f /home/linaro/init/config/hostapd.conf /etc/hostapd
+sudo cp -f /home/linaro/init/configs/hostapd.conf /etc/hostapd
 
 echo "kill wpa_supplicant"
 sudo killall wpa_supplicant
