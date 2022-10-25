@@ -47,3 +47,6 @@ cp ../SWupdate/SWupdate.exe /home/linaro/bin/
 
 #about dnsmasq
 sudo apt-get install dnsmasq
+
+#about /dev/ttyS1
+#modify /boot/config.txt line15 intf:uart1=on
