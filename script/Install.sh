@@ -44,3 +44,6 @@ cp ../SWupdate/SWupdate.exe /home/linaro/bin/
 #check
 #gpio -v
 #gpio readall
+
+#about dnsmasq
+sudo apt-get install dnsmasq
