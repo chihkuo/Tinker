@@ -50,3 +50,9 @@ sudo apt-get install dnsmasq
 
 #about /dev/ttyS1
 #modify /boot/config.txt line15 intf:uart1=on
+
+# install anydesk
+sudo apt update
+wget https://download.anydesk.com/rpi/anydesk_2.9.4-1_armhf.deb
+sudo dpkg -i anydesk_2.9.4-1_armhf.deb
+sudo apt --fix-broken install
