@@ -10,14 +10,12 @@
 #include "../common/base64.h"
 #include "../common/SaveLog.h"
 
-//#define USB_PATH    "/tmp/run/mountd/sda1"
-#define USB_PATH    "/mnt"
+//#define USB_PATH    "/mnt"
 #define USB_DEV     "/dev/sda1"
-#define SDCARD_PATH "/tmp/sdcard"
 
 #define VERSION             "1.3.2"
 #define TIMEOUT             "30"
-#define CURL_FILE           "/tmp/FWupdate"
+#define CURL_FILE           "/run/user/1000/FWupdate"
 #define CURL_CMD            "curl -H 'Content-Type: text/xml;charset=UTF-8;SOAPAction:\"\"' -k https://52.9.235.220:8443/SmsWebService1.asmx?WSDL -d @"CURL_FILE" --max-time "TIMEOUT
 
 #define MIFW_LIST               "mifwlist"
@@ -28,31 +26,31 @@
 #define BATFW_LIST              "batteryfwlist"
 #define BMS_LIST                "bmslist"
 
-#define TMP_MIFW_LIST           "/tmp/mifwlist"
-#define TMP_MIFW_BLIST          "/tmp/mifwbroadcastlist"
-#define TMP_HBFW_LIST           "/tmp/hybridfwlist"
-#define TMP_PLC_LIST            "/tmp/plclist"
-#define TMP_PLCM_LIST           "/tmp/plcmlist"
-#define TMP_BATFW_LIST          "/tmp/batteryfwlist"
-#define TMP_BMS_LIST            "/tmp/test/BMS/bmslist"
+#define TMP_MIFW_LIST           "/run/user/1000/mifwlist"
+#define TMP_MIFW_BLIST          "/run/user/1000/mifwbroadcastlist"
+#define TMP_HBFW_LIST           "/run/user/1000/hybridfwlist"
+#define TMP_PLC_LIST            "/run/user/1000/plclist"
+#define TMP_PLCM_LIST           "/run/user/1000/plcmlist"
+#define TMP_BATFW_LIST          "/run/user/1000/batteryfwlist"
+#define TMP_BMS_LIST            "/run/user/1000/BMS/bmslist"
 
-#define USB_MIFW_LIST           "/mnt/mifwlist"
-#define USB_MIFW_BLIST          "/mnt/mifwbroadcastlist"
-#define USB_HBFW_LIST           "/mnt/hybridfwlist"
-#define USB_PLC_LIST            "/mnt/plclist"
-#define USB_PLCM_LIST           "/mnt/plcmlist"
-#define USB_BATFW_LIST          "/mnt/batteryfwlist"
-#define USB_BMS_LIST            "/mnt/BMS/bmslist"
+//#define USB_MIFW_LIST           "/mnt/mifwlist"
+//#define USB_MIFW_BLIST          "/mnt/mifwbroadcastlist"
+//#define USB_HBFW_LIST           "/mnt/hybridfwlist"
+//#define USB_PLC_LIST            "/mnt/plclist"
+//#define USB_PLCM_LIST           "/mnt/plcmlist"
+//#define USB_BATFW_LIST          "/mnt/batteryfwlist"
+//#define USB_BMS_LIST            "/mnt/BMS/bmslist"
 
-#define SYSLOG_PATH         "/tmp/test/SYSLOG"
+#define SYSLOG_PATH         "/run/user/1000/SYSLOG"
 #define MAX_DATA_SIZE       144
 #define MAX_HYBRID_SIZE     100
 #define MAX_BATTERY_SIZE    100
 
-#define	HYBRIDFW_FILE       "/mnt/hybridfw.tar.gz"
-#define	TMP_HYBRIDFW_FILE   "/tmp/hybridfw.tar.gz"
-#define	BATTERYFW_FILE      "/mnt/batteryfw.tar.gz"
-#define	TMP_BATTERYFW_FILE  "/tmp/batteryfw.tar.gz"
+//#define	HYBRIDFW_FILE       "/mnt/hybridfw.tar.gz"
+#define	TMP_HYBRIDFW_FILE   "/run/user/1000/hybridfw.tar.gz"
+//#define	BATTERYFW_FILE      "/mnt/batteryfw.tar.gz"
+#define	TMP_BATTERYFW_FILE  "/run/user/1000/batteryfw.tar.gz"
 
 #define OFFLINE_SECOND 1800
 
@@ -145,6 +143,16 @@ int update_FW_stop = 0;
 char g_CURL_CMD[256] = {0};
 char g_SYSLOG_PATH[64] = {0};
 char g_UPDATE_PATH[64] = {0};
+char g_USB_PATH[64] = {0};
+char g_USB_MIFW_LIST[128] = {0};
+char g_USB_MIFW_BLIST[128] = {0};
+char g_USB_HBFW_LIST[128] = {0};
+char g_USB_PLC_LIST[128] = {0};
+char g_USB_PLCM_LIST[128] = {0};
+char g_USB_BATFW_LIST[128] = {0};
+char g_USB_BMS_LIST[128] = {0};
+char g_HYBRIDFW_FILE[128] = {0};
+char g_BATTERYFW_FILE[128] = {0};
 
 int gisusb = 0;
 int gbaud = 0;
@@ -203,7 +211,7 @@ void getMAC(char *MAC)
     FILE *fd = NULL;
 
     // get MAC address
-    fd = popen("uci get network.lan_dev.macaddr", "r");
+    fd = popen("cat /sys/class/net/eth0/address", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -222,7 +230,7 @@ void getConfig()
     FILE *fd = NULL;
 
     // get update server
-    fd = popen("uci get dlsetting.@sms[0].update_server", "r");
+    fd = popen("/home/linaro/bin/parameter.sh get update_server", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -234,7 +242,7 @@ void getConfig()
     printf("Update Server = %s\n", UPDATE_SERVER);
 
     // get update port
-    fd = popen("uci get dlsetting.@sms[0].update_port", "r");
+    fd = popen("/home/linaro/bin/parameter.sh get update_port", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -245,7 +253,7 @@ void getConfig()
     printf("Update Port = %d\n", update_port);
 
     // get update SW time
-    fd = popen("uci get dlsetting.@sms[0].update_SW_time", "r");
+    fd = popen("/home/linaro/bin/parameter.sh get update_SW_time", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -256,7 +264,7 @@ void getConfig()
     printf("Update SW time = %d\n", update_SW_time);
 
     // get update FW start
-    fd = popen("uci get dlsetting.@sms[0].update_FW_start", "r");
+    fd = popen("/home/linaro/bin/parameter.sh get update_FW_start", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -267,7 +275,7 @@ void getConfig()
     printf("Update FW start = %d\n", update_FW_start);
 
     // get update FW stop
-    fd = popen("uci get dlsetting.@sms[0].update_FW_stop", "r");
+    fd = popen("/home/linaro/bin/parameter.sh get update_FW_stop", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -278,7 +286,7 @@ void getConfig()
     printf("Update FW stop = %d\n", update_FW_stop);
 
     // get delay_time_1
-    fd = popen("uci get dlsetting.@sms[0].delay_time_1", "r");
+    fd = popen("/home/linaro/bin/parameter.sh get delay_time_1", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -289,7 +297,7 @@ void getConfig()
     printf("Delay time 1 (us.) = %d\n", delay_time_1);
 
     // get delay_time_2
-    fd = popen("uci get dlsetting.@sms[0].delay_time_2", "r");
+    fd = popen("/home/linaro/bin/parameter.sh get delay_time_2", "r");
     if ( fd == NULL ) {
         printf("popen fail!\n");
         return;
@@ -315,24 +323,68 @@ void setCMD()
 void setPath()
 {
     struct stat st;
+    FILE *pFile = NULL;
 
     if ( stat(USB_DEV, &st) == 0 ) { //linux storage detect
-        strcpy(g_SYSLOG_PATH, USB_PATH);
-        strcat(g_SYSLOG_PATH, "/SYSLOG");
-        //strcpy(g_UPDATE_PATH, USB_PATH);
-        //strcat(g_UPDATE_PATH, "/test.hex");
+	pFile = popen("df | grep /dev/sda1 | awk '{print $6}'", "r");
+	if ( pFile == NULL ) {
+		printf("popen fail!\n");
+		return;
+	}
+	fgets(g_USB_PATH, 64, pFile);
+	pclose(pFile);
+	g_USB_PATH[strlen(g_USB_PATH)-1] = 0; // clean \n
+	printf("USB path = %s\n", g_USB_PATH);
 
+	// set usb list path USB_MIFW_BLIST
+	// MIFW_LIST
+	strcpy(g_USB_MIFW_LIST, g_USB_PATH);
+	strcat(g_USB_MIFW_LIST, "/");
+	strcat(g_USB_MIFW_LIST, MIFW_LIST);
+	printf("USB_MIFW_LIST path = %s\n", g_USB_MIFW_LIST);
+	// MIFW_BLIST
+	strcpy(g_USB_MIFW_BLIST, g_USB_PATH);
+	strcat(g_USB_MIFW_BLIST, "/");
+	strcat(g_USB_MIFW_BLIST, MIFW_BLIST);
+	printf("USB_MIFW_BLIST path = %s\n", g_USB_MIFW_BLIST);
+	// HBFW_LIST
+	strcpy(g_USB_HBFW_LIST, g_USB_PATH);
+	strcat(g_USB_HBFW_LIST, "/");
+	strcat(g_USB_HBFW_LIST, HBFW_LIST);
+	printf("USB_HBFW_LIST path = %s\n", g_USB_HBFW_LIST);
+	// PLC_LIST
+	strcpy(g_USB_PLC_LIST, g_USB_PATH);
+	strcat(g_USB_PLC_LIST, "/");
+	strcat(g_USB_PLC_LIST, PLC_LIST);
+	printf("USB_PLC_LIST path = %s\n", g_USB_PLC_LIST);
+	// PLCM_LIST
+	strcpy(g_USB_PLCM_LIST, g_USB_PATH);
+	strcat(g_USB_PLCM_LIST, "/");
+	strcat(g_USB_PLCM_LIST, PLCM_LIST);
+	printf("USB_PLCM_LIST path = %s\n", g_USB_PLCM_LIST);
+	// BATFW_LIST g_USB_BATFW_LIST
+	strcpy(g_USB_BATFW_LIST, g_USB_PATH);
+	strcat(g_USB_BATFW_LIST, "/");
+	strcat(g_USB_BATFW_LIST, BATFW_LIST);
+	printf("USB_BATFW_LIST path = %s\n", g_USB_BATFW_LIST);
+	// BMS_LIST
+	strcpy(g_USB_BMS_LIST, g_USB_PATH);
+	strcat(g_USB_BMS_LIST, "/");
+	strcat(g_USB_BMS_LIST, BMS_LIST);
+	printf("USB_BMS_LIST path = %s\n", g_USB_BMS_LIST);
+	// HYBRIDFW_FILE
+	strcpy(g_HYBRIDFW_FILE, g_USB_PATH);
+	strcat(g_HYBRIDFW_FILE, "/hybridfw.tar.gz");
+	printf("HYBRIDFW_FILE path = %s\n", g_HYBRIDFW_FILE);
+	// BATTERYFW_FILE
+	strcpy(g_BATTERYFW_FILE, g_USB_PATH);
+	strcat(g_BATTERYFW_FILE, "/batteryfw.tar.gz");
+	printf("BATTERYFW_FILE path = %s\n", g_BATTERYFW_FILE);
+
+        strcpy(g_SYSLOG_PATH, g_USB_PATH);
+        strcat(g_SYSLOG_PATH, "/SYSLOG");
         gisusb = 1;
-    }
-    else if ( stat(SDCARD_PATH, &st) == 0 ) {
-        strcpy(g_SYSLOG_PATH, SDCARD_PATH);
-        strcat(g_SYSLOG_PATH, "/SYSLOG");
-        //strcpy(g_UPDATE_PATH, SDCARD_PATH);
-        //strcat(g_UPDATE_PATH, "/test.hex");
-
-        gisusb = 0;
-    }
-    else {
+    } else {
         strcpy(g_SYSLOG_PATH, SYSLOG_PATH);
         //strcpy(g_UPDATE_PATH, UPDATE_FILE);
 
@@ -378,16 +430,16 @@ int QryDeviceFWUpdate()
     fputs(SOAP_TAIL, fd);
     fclose(fd);
 
-    // run curl soap command, save result to /tmp/QryDeviceFWUpdate
-    sprintf(buf, "%s > /tmp/QryDeviceFWUpdate", g_CURL_CMD);
+    // run curl soap command, save result to /run/user/1000/QryDeviceFWUpdate
+    sprintf(buf, "%s > /run/user/1000/QryDeviceFWUpdate", g_CURL_CMD);
     system(buf);
 
     // check size
     // for debug
-    fd = fopen("/tmp/QryDeviceFWUpdate", "rb");
+    fd = fopen("/run/user/1000/QryDeviceFWUpdate", "rb");
     if ( fd == NULL ) {
-        printf("#### QryDeviceFWUpdate() open /tmp/QryDeviceFWUpdate Fail ####\n");
-        SaveLog("FWupdate QryDeviceFWUpdate() : open /tmp/QryDeviceFWUpdate Fail", st_time);
+        printf("#### QryDeviceFWUpdate() open /run/user/1000/QryDeviceFWUpdate Fail ####\n");
+        SaveLog("FWupdate QryDeviceFWUpdate() : open /run/user/1000/QryDeviceFWUpdate Fail", st_time);
         return 2;
     }
     fseek(fd, 0, SEEK_END);
@@ -473,9 +525,9 @@ int QryDeviceFWUpdate()
             //save_file++;
             memset(myupdate.FILE, 0, 128);
             if ( gisusb )
-                strcpy(myupdate.FILE, USB_PATH);
+                strcpy(myupdate.FILE, g_USB_PATH);
             else
-                strcpy(myupdate.FILE, "/tmp");
+                strcpy(myupdate.FILE, "/run/user/1000");
             strncat(myupdate.FILE, save_file, strlen(save_file));
         }
 
@@ -502,10 +554,10 @@ int QryDeviceFWUpdate()
                 if ( miufd == NULL ) {
                     if ( gisusb ) {
                         // usb
-                        if ( stat(USB_MIFW_LIST, &mystat) == 0 )
-                            miufd = fopen(USB_MIFW_LIST, "ab");
+                        if ( stat(g_USB_MIFW_LIST, &mystat) == 0 )
+                            miufd = fopen(g_USB_MIFW_LIST, "ab");
                         else
-                            miufd = fopen(USB_MIFW_LIST, "wb");
+                            miufd = fopen(g_USB_MIFW_LIST, "wb");
                     } else {
                         // tmp
                         if ( stat(TMP_MIFW_LIST, &mystat) == 0 )
@@ -523,7 +575,7 @@ int QryDeviceFWUpdate()
                 if ( mibfd == NULL ) {
                     if ( gisusb ) {
                         // usb
-                        mibfd = fopen(USB_MIFW_BLIST, "wb");
+                        mibfd = fopen(g_USB_MIFW_BLIST, "wb");
                     } else {
                         // tmp
                         mibfd = fopen(TMP_MIFW_BLIST, "wb");
@@ -543,10 +595,10 @@ int QryDeviceFWUpdate()
                 if ( hbufd == NULL ) {
                     if ( gisusb ) {
                         // usb
-                        if ( stat(USB_HBFW_LIST, &mystat) == 0 )
-                            hbufd = fopen(USB_HBFW_LIST, "ab");
+                        if ( stat(g_USB_HBFW_LIST, &mystat) == 0 )
+                            hbufd = fopen(g_USB_HBFW_LIST, "ab");
                         else
-                            hbufd = fopen(USB_HBFW_LIST, "wb");
+                            hbufd = fopen(g_USB_HBFW_LIST, "wb");
                     } else {
                         // tmp
                         if ( stat(TMP_HBFW_LIST, &mystat) == 0 )
@@ -563,10 +615,10 @@ int QryDeviceFWUpdate()
                 if ( batfd == NULL ) {
                     if ( gisusb ) {
                         // usb
-                        if ( stat(USB_BATFW_LIST, &mystat) == 0 )
-                            batfd = fopen(USB_BATFW_LIST, "ab");
+                        if ( stat(g_USB_BATFW_LIST, &mystat) == 0 )
+                            batfd = fopen(g_USB_BATFW_LIST, "ab");
                         else
-                            batfd = fopen(USB_BATFW_LIST, "wb");
+                            batfd = fopen(g_USB_BATFW_LIST, "wb");
                     } else {
                         // tmp
                         if ( stat(TMP_BATFW_LIST, &mystat) == 0 )
@@ -586,10 +638,10 @@ int QryDeviceFWUpdate()
             if ( batfd == NULL ) {
                     if ( gisusb ) {
                         // usb
-                        if ( stat(USB_BATFW_LIST, &mystat) == 0 )
-                            batfd = fopen(USB_BATFW_LIST, "ab");
+                        if ( stat(g_USB_BATFW_LIST, &mystat) == 0 )
+                            batfd = fopen(g_USB_BATFW_LIST, "ab");
                         else
-                            batfd = fopen(USB_BATFW_LIST, "wb");
+                            batfd = fopen(g_USB_BATFW_LIST, "wb");
                     } else {
                         // tmp
                         if ( stat(TMP_BATFW_LIST, &mystat) == 0 )
@@ -608,7 +660,7 @@ int QryDeviceFWUpdate()
                 if ( plcfd == NULL ) {
                     if ( gisusb ) {
                         // usb
-                        plcfd = fopen(USB_PLC_LIST, "wb");
+                        plcfd = fopen(g_USB_PLC_LIST, "wb");
                     } else {
                         // tmp
                         plcfd = fopen(TMP_PLC_LIST, "wb");
@@ -628,7 +680,7 @@ int QryDeviceFWUpdate()
                 if ( plcmfd == NULL ) {
                     if ( gisusb ) {
                         // usb
-                        plcmfd = fopen(USB_PLCM_LIST, "wb");
+                        plcmfd = fopen(g_USB_PLCM_LIST, "wb");
                     } else {
                         // tmp
                         plcmfd = fopen(TMP_PLCM_LIST, "wb");
@@ -697,7 +749,7 @@ int GetComPortSetting(int port)
     FILE *pFile = NULL;
 
     // get baud
-    sprintf(cmd, "uci get dlsetting.@comport[0].com%d_baud", port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_baud", port);
     pFile = popen(cmd, "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
@@ -708,7 +760,7 @@ int GetComPortSetting(int port)
     sscanf(buf, "%d", &gbaud);
     printf("Baud rate = %d\n", gbaud);
     // get data bits
-    sprintf(cmd, "uci get dlsetting.@comport[0].com%d_data_bits", port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_data_bits", port);
     pFile = popen(cmd, "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
@@ -719,7 +771,7 @@ int GetComPortSetting(int port)
     sscanf(buf, "%d", &gdatabits);
     printf("Data bits = %d\n", gdatabits);
     // get parity
-    sprintf(cmd, "uci get dlsetting.@comport[0].com%d_parity", port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_parity", port);
     pFile = popen(cmd, "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
@@ -730,7 +782,7 @@ int GetComPortSetting(int port)
     gparity[strlen(gparity)-1] = 0; // clean \n
     printf("Parity = %s\n", gparity);
     // get stop bits
-    sprintf(cmd, "uci get dlsetting.@comport[0].com%d_stop_bits", port);
+    sprintf(cmd, "/home/linaro/bin/parameter.sh get com%d_stop_bits", port);
     pFile = popen(cmd, "r");
     if ( pFile == NULL ) {
         printf("popen fail!\n");
@@ -746,7 +798,8 @@ int GetComPortSetting(int port)
 
 int OpenComPort(int comport)
 {
-    char *strPort[]={"/dev/ttyUSB0","/dev/ttyUSB1","/dev/ttyUSB2","/dev/ttyUSB3"};
+    //char *strPort[]={"/dev/ttyUSB0","/dev/ttyUSB1","/dev/ttyUSB2","/dev/ttyUSB3"};
+    char *strPort[]={"/dev/ttyS1","/dev/ttyS2","/dev/ttyS3","/dev/ttyS4"};
     char inverter_parity = 0;
 
     // set parity
@@ -7274,7 +7327,7 @@ int DoUpdate(char *list_path)
 {
     FILE *pfile_fd = NULL;
     char buf[512] = {0}, strtmp[512] = {0};
-    char FILENAME[64] = {0};
+    char FILENAME[128] = {0};
     int comport = 0;//, ret = 0, index = -1;
     struct stat listst;
 
@@ -7296,24 +7349,24 @@ int DoUpdate(char *list_path)
 
         // get milist name
         printf("Get MIList\n");
-        system("cd /tmp; ls MIList_* > /tmp/MIList");
+        system("cd /run/user/1000; ls MIList_* > /run/user/1000/MIList");
 
-        pfile_fd = fopen("/tmp/MIList", "rb");
+        pfile_fd = fopen("/run/user/1000/MIList", "rb");
         if ( pfile_fd == NULL ) {
-            printf("#### Open /tmp/MIList Fail ####\n");
+            printf("#### Open /run/user/1000/MIList Fail ####\n");
             printf("wait 1 min.\n");
-            SaveLog((char *)"FWupdate DoUpdate() : Open /tmp/MIList Fail, wait 1 min.", st_time);
+            SaveLog((char *)"FWupdate DoUpdate() : Open /run/user/1000/MIList Fail, wait 1 min.", st_time);
             usleep(60000000); // 60s;
             continue;
         }
         // get file name
         memset(buf, 0, 512);
-        fgets(buf, 64, pfile_fd);
+        fgets(buf, 128, pfile_fd);
         fclose(pfile_fd);
 
         if ( strlen(buf) ) {
             buf[strlen(buf)-1] = 0; // set '\n' to 0
-            sprintf(FILENAME, "/tmp/%s", buf);
+            sprintf(FILENAME, "/run/user/1000/%s", buf);
             printf("FILENAME = %s\n", FILENAME);
             break;
         } else {
@@ -7680,27 +7733,27 @@ int Updheartbeattime(time_t time)
     fputs(SOAP_TAIL, fd);
     fclose(fd);
 
-    // run curl soap command, save result to /tmp/Updheartbeattime
-    sprintf(buf, "%s > /tmp/Updheartbeattime", g_CURL_CMD);
+    // run curl soap command, save result to /run/user/1000/Updheartbeattime
+    sprintf(buf, "%s > /run/user/1000/Updheartbeattime", g_CURL_CMD);
     system(buf);
 
     // check responds
-    if ( stat("/tmp/Updheartbeattime", &st) == 0 )
+    if ( stat("/run/user/1000/Updheartbeattime", &st) == 0 )
         if ( st.st_size == 0 ) {
-            printf("#### Updheartbeattime() /tmp/Updheartbeattime empty ####\n");
-            SaveLog("FWUpdate Updheartbeattime() : /tmp/Updheartbeattime empty", st_time);
+            printf("#### Updheartbeattime() /run/user/1000/Updheartbeattime empty ####\n");
+            SaveLog("FWUpdate Updheartbeattime() : /run/user/1000/Updheartbeattime empty", st_time);
             return 2;
         }
     // read result
-    fd = fopen("/tmp/Updheartbeattime", "rb");
+    fd = fopen("/run/user/1000/Updheartbeattime", "rb");
     if ( fd == NULL ) {
-        printf("#### Updheartbeattime() open /tmp/Updheartbeattime Fail ####\n");
+        printf("#### Updheartbeattime() open /run/user/1000/Updheartbeattime Fail ####\n");
         return 3;
     }
     memset(buf, 0, 512);
     fread(buf, 1, 512, fd);
     fclose(fd);
-    //printf("/tmp/Updheartbeattime : \n%s\n", buf);
+    //printf("/run/user/1000/Updheartbeattime : \n%s\n", buf);
 
     // check result
     index = strstr(buf, "<UpdheartbeattimeV2Result>");
@@ -7734,7 +7787,7 @@ int Updheartbeattime(time_t time)
 
 int main(int argc, char* argv[])
 {
-    char opt;
+    int opt;
     while( (opt = getopt(argc, argv, "vVtT")) != -1 )
     {
         switch (opt)
@@ -7764,6 +7817,7 @@ int main(int argc, char* argv[])
     char strbuf[256] = {0};
     char milistbuf[256] = {0};
     char filebuf[256] = {0};
+    char cmdbuf[256] = {0};
     char hybrid_sn[17] = {0};
     FILE *pfile = NULL;
     FILE *plist = NULL;
@@ -7777,7 +7831,7 @@ int main(int argc, char* argv[])
     ModbusDrvDeinit(5);
     ModbusDrvDeinit(6);
     printf("Do init\n");
-    initenv((char *)"/usr/home/G320.ini");
+    initenv((char *)"/home/linaro/bin/G320.ini");
 
     // when boot to run once first
     getMAC(MAC);
@@ -7823,8 +7877,8 @@ int main(int argc, char* argv[])
         // do QryDeviceFWUpdate
         if ( st_time->tm_min % update_SW_time == 0 ) {
             // if update file not exist
-            //if ( stat(g_UPDATE_PATH, &st) ) { // not in /tmp
-                //if ( stat(MIFW_FILE, &st) ) { // not in /tmp
+            //if ( stat(g_UPDATE_PATH, &st) ) { // not in /run/user/1000
+                //if ( stat(MIFW_FILE, &st) ) { // not in /run/user/1000
                     previous_time = current_time;
                     printf("localtime : %4d/%02d/%02d %02d:%02d:%02d\n", 1900+st_time->tm_year, 1+st_time->tm_mon, st_time->tm_mday, st_time->tm_hour, st_time->tm_min, st_time->tm_sec);
                     //printf("#### Debug : QryDeviceFWUpdate start time : %ld ####\n", previous_time);
@@ -7870,16 +7924,16 @@ int main(int argc, char* argv[])
             printf("doflag = 1, fw update check start\n");
             if ( gisusb ) {
                 // check fw data from usb
-                if ( stat(HYBRIDFW_FILE, &st) == 0 ) {
+                if ( stat(g_HYBRIDFW_FILE, &st) == 0 ) {
                     printf("detect fw data\n");
                     // unzip
-                    sprintf(strbuf, "tar -zxvf %s -C /mnt/", HYBRIDFW_FILE);
+                    sprintf(strbuf, "tar -zxvf %s -C %s/", g_HYBRIDFW_FILE, g_USB_PATH);
                     system(strbuf);
                     usleep(1000000);
                     system("sync");
                     // remove fw data
-                    if ( remove(HYBRIDFW_FILE) == 0 )
-                        printf("Remove %s\n", HYBRIDFW_FILE);
+                    if ( remove(g_HYBRIDFW_FILE) == 0 )
+                        printf("Remove %s\n", g_HYBRIDFW_FILE);
                     else
                         perror("remove");
                     usleep(1000000);
@@ -7888,7 +7942,7 @@ int main(int argc, char* argv[])
                     // check milist
                     while (1) {
                         printf("check MIList\n");
-                        pfile = popen("ls /tmp/MIList_*", "r");
+                        pfile = popen("ls /run/user/1000/MIList_*", "r");
                         if ( pfile != NULL ) {
                             memset(strbuf, 0x00, 256);
                             memset(milistbuf, 0x00, 256);
@@ -7907,7 +7961,8 @@ int main(int argc, char* argv[])
 
                     // check fw file cpu1
                     printf("check cpu1\n");
-                    pfile = popen("ls /mnt/cpu1_*", "r");
+                    sprintf(cmdbuf, "ls %s/cpu1_*", g_USB_PATH);
+                    pfile = popen(cmdbuf, "r");
                     if ( pfile != NULL ) {
                         memset(strbuf, 0x00, 256);
                         memset(filebuf, 0x00, 256);
@@ -7918,10 +7973,10 @@ int main(int argc, char* argv[])
                             pclose(pfile);
 
                             // set hybridfwlist
-                            if ( stat(USB_HBFW_LIST, &st) != 0 )
-                                plist = fopen(USB_HBFW_LIST, "w");
+                            if ( stat(g_USB_HBFW_LIST, &st) != 0 )
+                                plist = fopen(g_USB_HBFW_LIST, "w");
                             else
-                                plist = fopen(USB_HBFW_LIST, "a");
+                                plist = fopen(g_USB_HBFW_LIST, "a");
 
                             // find sn in milist
                             pfile = fopen(milistbuf, "r");
@@ -7945,7 +8000,8 @@ int main(int argc, char* argv[])
                     }
                     // check fw file cpu2
                     printf("check cpu2\n");
-                    pfile = popen("ls /mnt/cpu2_*", "r");
+                    sprintf(cmdbuf, "ls %s/cpu2_*", g_USB_PATH);
+                    pfile = popen(cmdbuf, "r");
                     if ( pfile != NULL ) {
                         memset(strbuf, 0x00, 256);
                         memset(filebuf, 0x00, 256);
@@ -7956,10 +8012,10 @@ int main(int argc, char* argv[])
                             pclose(pfile);
 
                             // set hybridfwlist
-                            if ( stat(USB_HBFW_LIST, &st) != 0 )
-                                plist = fopen(USB_HBFW_LIST, "w");
+                            if ( stat(g_USB_HBFW_LIST, &st) != 0 )
+                                plist = fopen(g_USB_HBFW_LIST, "w");
                             else
-                                plist = fopen(USB_HBFW_LIST, "a");
+                                plist = fopen(g_USB_HBFW_LIST, "a");
 
                             // find sn in milist
                             pfile = fopen(milistbuf, "r");
@@ -7984,16 +8040,16 @@ int main(int argc, char* argv[])
                 }
 
                 // check battery data from usb
-                if ( stat(BATTERYFW_FILE, &st) == 0 ) {
+                if ( stat(g_BATTERYFW_FILE, &st) == 0 ) {
                     printf("detect bat data\n");
                     // unzip
-                    sprintf(strbuf, "tar -zxvf %s -C /mnt/", BATTERYFW_FILE);
+                    sprintf(strbuf, "tar -zxvf %s -C %s/", g_BATTERYFW_FILE, g_USB_PATH);
                     system(strbuf);
                     usleep(1000000);
                     system("sync");
                     // remove fw data
-                    if ( remove(BATTERYFW_FILE) == 0 )
-                        printf("Remove %s\n", BATTERYFW_FILE);
+                    if ( remove(g_BATTERYFW_FILE) == 0 )
+                        printf("Remove %s\n", g_BATTERYFW_FILE);
                     else
                         perror("remove");
                     usleep(1000000);
@@ -8002,7 +8058,7 @@ int main(int argc, char* argv[])
                     // check milist
                     while (1) {
                         printf("check MIList\n");
-                        pfile = popen("ls /tmp/MIList_*", "r");
+                        pfile = popen("ls /run/user/1000/MIList_*", "r");
                         if ( pfile != NULL ) {
                             memset(strbuf, 0x00, 256);
                             memset(milistbuf, 0x00, 256);
@@ -8021,8 +8077,8 @@ int main(int argc, char* argv[])
 
                     // check myupdate.UpdateType if empty
                     if ( strlen(myupdate.UpdateType) == 0 ) {
-                        if ( stat(USB_BATFW_LIST, &st) == 0 ) {
-                            plist = fopen(USB_BATFW_LIST, "r");
+                        if ( stat(g_USB_BATFW_LIST, &st) == 0 ) {
+                            plist = fopen(g_USB_BATFW_LIST, "r");
                             memset(strbuf, 0x00, 256);
                             fgets(strbuf, 255, plist);
                             fclose(plist);
@@ -8033,7 +8089,8 @@ int main(int argc, char* argv[])
 
                     // check fw file .glo
                     printf("check .glo\n");
-                    pfile = popen("ls /mnt/SV_*.glo", "r");
+                    sprintf(cmdbuf, "ls %s/SV_*.glo", g_USB_PATH);
+                    pfile = popen(cmdbuf, "r");
                     if ( pfile != NULL ) {
                         memset(strbuf, 0x00, 256);
                         memset(filebuf, 0x00, 256);
@@ -8044,10 +8101,10 @@ int main(int argc, char* argv[])
                             pclose(pfile);
 
                             // set hybridfwlist
-                            if ( stat(USB_BATFW_LIST, &st) != 0 )
-                                plist = fopen(USB_BATFW_LIST, "w");
+                            if ( stat(g_USB_BATFW_LIST, &st) != 0 )
+                                plist = fopen(g_USB_BATFW_LIST, "w");
                             else
-                                plist = fopen(USB_BATFW_LIST, "a");
+                                plist = fopen(g_USB_BATFW_LIST, "a");
 
                             // find sn in milist
                             pfile = fopen(milistbuf, "r");
@@ -8071,7 +8128,8 @@ int main(int argc, char* argv[])
                     }
                     // check fw file .hex
                     printf("check .hex\n");
-                    pfile = popen("ls /mnt/SV_*.hex", "r");
+                    sprintf(cmdbuf, "ls %s/SV_*.hex", g_USB_PATH);
+                    pfile = popen(cmdbuf, "r");
                     if ( pfile != NULL ) {
                         memset(strbuf, 0x00, 256);
                         memset(filebuf, 0x00, 256);
@@ -8082,10 +8140,10 @@ int main(int argc, char* argv[])
                             pclose(pfile);
 
                             // set hybridfwlist
-                            if ( stat(USB_BATFW_LIST, &st) != 0 )
-                                plist = fopen(USB_BATFW_LIST, "w");
+                            if ( stat(g_USB_BATFW_LIST, &st) != 0 )
+                                plist = fopen(g_USB_BATFW_LIST, "w");
                             else
-                                plist = fopen(USB_BATFW_LIST, "a");
+                                plist = fopen(g_USB_BATFW_LIST, "a");
 
                             // find sn in milist
                             pfile = fopen(milistbuf, "r");
@@ -8109,7 +8167,8 @@ int main(int argc, char* argv[])
                     }
                     // check fw file .bin
                     printf("check .bin\n");
-                    pfile = popen("ls /mnt/SV_*.bin", "r");
+                    sprintf(cmdbuf, "ls %s/SV_*.bin", g_USB_PATH);
+                    pfile = popen(cmdbuf, "r");
                     if ( pfile != NULL ) {
                         memset(strbuf, 0x00, 256);
                         memset(filebuf, 0x00, 256);
@@ -8120,10 +8179,10 @@ int main(int argc, char* argv[])
                             pclose(pfile);
 
                             // set hybridfwlist
-                            if ( stat(USB_BATFW_LIST, &st) != 0 )
-                                plist = fopen(USB_BATFW_LIST, "w");
+                            if ( stat(g_USB_BATFW_LIST, &st) != 0 )
+                                plist = fopen(g_USB_BATFW_LIST, "w");
                             else
-                                plist = fopen(USB_BATFW_LIST, "a");
+                                plist = fopen(g_USB_BATFW_LIST, "a");
 
                             // find sn in milist
                             pfile = fopen(milistbuf, "r");
@@ -8148,51 +8207,51 @@ int main(int argc, char* argv[])
                 }
 
                 // check mi unicast fw
-                if ( stat(USB_MIFW_LIST, &st) == 0 ) {
-                    DoUpdate(USB_MIFW_LIST);
+                if ( stat(g_USB_MIFW_LIST, &st) == 0 ) {
+                    DoUpdate(g_USB_MIFW_LIST);
                     restart = 1;
                 }
 
                 // check mi broadcast fw
-                if ( stat(USB_MIFW_BLIST, &st) == 0 ) {
-                    DoUpdate(USB_MIFW_BLIST);
+                if ( stat(g_USB_MIFW_BLIST, &st) == 0 ) {
+                    DoUpdate(g_USB_MIFW_BLIST);
                     restart = 1;
                 }
 
                 // check hybrid unicast fw
-                if ( stat(USB_HBFW_LIST, &st) == 0 ) {
-                    DoUpdate(USB_HBFW_LIST);
+                if ( stat(g_USB_HBFW_LIST, &st) == 0 ) {
+                    DoUpdate(g_USB_HBFW_LIST);
                     restart = 1;
                 }
 
                 // check plc unicast fw
-                if ( stat(USB_PLC_LIST, &st) == 0 ) {
-                    DoUpdate(USB_PLC_LIST);
+                if ( stat(g_USB_PLC_LIST, &st) == 0 ) {
+                    DoUpdate(g_USB_PLC_LIST);
                     restart = 1;
                 }
 
                 // check plc module broadcast fw
-                if ( stat(USB_PLCM_LIST, &st) == 0 ) {
-                    DoUpdate(USB_PLCM_LIST);
+                if ( stat(g_USB_PLCM_LIST, &st) == 0 ) {
+                    DoUpdate(g_USB_PLCM_LIST);
                     restart = 1;
                 }
 
                 // check battery fw
-                if ( stat(USB_BATFW_LIST, &st) == 0 ) {
-                    DoUpdate(USB_BATFW_LIST);
+                if ( stat(g_USB_BATFW_LIST, &st) == 0 ) {
+                    DoUpdate(g_USB_BATFW_LIST);
                     restart = 1;
                 }
 
                 // check bms list
-                if ( stat(USB_BMS_LIST, &st) == 0 ) {
-                    DoUpdate(USB_BMS_LIST);
+                if ( stat(g_USB_BMS_LIST, &st) == 0 ) {
+                    DoUpdate(g_USB_BMS_LIST);
                     restart = 1;
                 }
             } else {
                 if ( stat(TMP_HYBRIDFW_FILE, &st) == 0 ) {
                     printf("detect fw data\n");
                     // unzip
-                    sprintf(strbuf, "tar -zxvf %s -C /tmp/", TMP_HYBRIDFW_FILE);
+                    sprintf(strbuf, "tar -zxvf %s -C /run/user/1000/", TMP_HYBRIDFW_FILE);
                     system(strbuf);
                     usleep(1000000);
                     system("sync");
@@ -8207,7 +8266,7 @@ int main(int argc, char* argv[])
                     // check milist
                     while (1) {
                         printf("check MIList\n");
-                        pfile = popen("ls /tmp/MIList_*", "r");
+                        pfile = popen("ls /run/user/1000/MIList_*", "r");
                         if ( pfile != NULL ) {
                             memset(strbuf, 0x00, 256);
                             memset(milistbuf, 0x00, 256);
@@ -8226,7 +8285,7 @@ int main(int argc, char* argv[])
 
                     // check fw file cpu1
                     printf("check cpu1\n");
-                    pfile = popen("ls /tmp/cpu1_*", "r");
+                    pfile = popen("ls /run/user/1000/cpu1_*", "r");
                     if ( pfile != NULL ) {
                         memset(strbuf, 0x00, 256);
                         memset(filebuf, 0x00, 256);
@@ -8264,7 +8323,7 @@ int main(int argc, char* argv[])
                     }
                     // check fw file cpu2
                     printf("check cpu2\n");
-                    pfile = popen("ls /tmp/cpu2_*", "r");
+                    pfile = popen("ls /run/user/1000/cpu2_*", "r");
                     if ( pfile != NULL ) {
                         memset(strbuf, 0x00, 256);
                         memset(filebuf, 0x00, 256);
@@ -8306,7 +8365,7 @@ int main(int argc, char* argv[])
                 if ( stat(TMP_BATTERYFW_FILE, &st) == 0 ) {
                     printf("detect bat data\n");
                     // unzip
-                    sprintf(strbuf, "tar -zxvf %s -C /tmp/", TMP_BATTERYFW_FILE);
+                    sprintf(strbuf, "tar -zxvf %s -C /run/user/1000/", TMP_BATTERYFW_FILE);
                     system(strbuf);
                     usleep(1000000);
                     system("sync");
@@ -8321,7 +8380,7 @@ int main(int argc, char* argv[])
                     // check milist
                     while (1) {
                         printf("check MIList\n");
-                        pfile = popen("ls /tmp/MIList_*", "r");
+                        pfile = popen("ls /run/user/1000/MIList_*", "r");
                         if ( pfile != NULL ) {
                             memset(strbuf, 0x00, 256);
                             memset(milistbuf, 0x00, 256);
@@ -8352,7 +8411,7 @@ int main(int argc, char* argv[])
 
                     // check fw file .glo
                     printf("check .glo\n");
-                    pfile = popen("ls /tmp/SV_*.glo", "r");
+                    pfile = popen("ls /run/user/1000/SV_*.glo", "r");
                     if ( pfile != NULL ) {
                         memset(strbuf, 0x00, 256);
                         memset(filebuf, 0x00, 256);
@@ -8390,7 +8449,7 @@ int main(int argc, char* argv[])
                     }
                     // check fw file .hex
                     printf("check .hex\n");
-                    pfile = popen("ls /tmp/SV_*.hex", "r");
+                    pfile = popen("ls /run/user/1000/SV_*.hex", "r");
                     if ( pfile != NULL ) {
                         memset(strbuf, 0x00, 256);
                         memset(filebuf, 0x00, 256);
@@ -8428,7 +8487,7 @@ int main(int argc, char* argv[])
                     }
                     // check fw file .bin
                     printf("check .bin\n");
-                    pfile = popen("ls /tmp/SV_*.bin", "r");
+                    pfile = popen("ls /run/user/1000/SV_*.bin", "r");
                     if ( pfile != NULL ) {
                         memset(strbuf, 0x00, 256);
                         memset(filebuf, 0x00, 256);
