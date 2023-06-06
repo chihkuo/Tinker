@@ -6,6 +6,9 @@
 #include <time.h>
 #include <ifaddrs.h>
 #include <netpacket/packet.h>
+#include <wiringPi.h>
+
+#define GP6A0	1
 
 #include "../common/base64.h"
 #include "../common/SaveLog.h"
@@ -7398,6 +7401,13 @@ int DoUpdate(char *list_path)
         OpenComPort(comport);
         sprintf(strtmp, "FWupdate DoUpdate() : Get comport fd %d", gcomportfd);
         SaveLog(strtmp, st_time);
+
+	printf("\nGPIO : wiringPiSetup()\n");
+	wiringPiSetup();
+	printf("GPIO : set OUTPUT\n");
+	pinMode(GP6A0, OUTPUT);
+	printf("GPIO : set LOW\n");
+	digitalWrite(GP6A0, LOW);
     }
 
     if ( gsncount == 0 ) {
@@ -7703,7 +7713,7 @@ int Updheartbeattime(time_t time)
     printf("localtime : %s\n", timebuf);
 
     // get SW ver
-    swver_fd = popen("/usr/home/dlg320.exe -v", "r");
+    swver_fd = popen("/home/linaro/bin/dlg320.exe -v", "r");
     if ( swver_fd != NULL ) {
         fgets(swverbuf, 32, swver_fd);
         swverbuf[strlen(swverbuf)-1] = 0; // set \n to 0
