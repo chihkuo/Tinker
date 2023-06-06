@@ -9,10 +9,11 @@ function copy() {
 	cp -f ../DataProgram/DataProgram.exe ./update/
 	cp -f ../dlsocket/DLsocket.exe ./update/
 	cp -f ../SWupdate/SWupdate.exe ./update/
-#	cp -f ../FWupdate/FWupdate.exe ./update/
+	cp -f ../FWupdate/FWupdate.exe ./update/
 	cp -f ../script/dlsetting ./update/
 	cp -f ../script/newSWupdate.sh ./update/
 	cp -f ../script/update.sh ./update/
+	cp -f ../script/program.sh ./update/
 	sync
 }
 

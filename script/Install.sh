@@ -36,6 +36,7 @@ cp ../datalog-h5000/dlg320.exe /home/linaro/bin/
 cp ../DataProgram/DataProgram.exe /home/linaro/bin/
 cp ../dlsocket/DLsocket.exe /home/linaro/bin/
 cp ../SWupdate/SWupdate.exe /home/linaro/bin/
+cp ../FWupdate/FWupdate.exe /home/linaro/bin/
 
 #about GPIO lib for C
 #git clone http://github.com/TinkerBoard/gpio_lib_c.git

@@ -46,6 +46,17 @@ then
 	else
 		echo "SWupdate.exe alive"
 	fi
+
+	sleep 30
+
+	ps -ax | grep FWupdate.exe | grep -v grep
+	if [ $? != 0 ]
+	then
+		echo "run FWupdate.exe"
+		sudo /home/linaro/bin/FWupdate.exe &
+	else
+		echo "FWupdate.exe alive"
+	fi
 fi
 
 if [ "$1" = "client" ]
@@ -81,10 +92,21 @@ then
 	else
 		echo "SWupdate.exe alive"
 	fi
+
+	sleep 30
+
+	ps -ax | grep FWupdate.exe | grep -v grep
+	if [ $? != 0 ]
+	then
+		echo "run FWupdate.exe"
+		sudo /home/linaro/bin/FWupdate.exe &
+	else
+		echo "FWupdate.exe alive"
+	fi
 fi
 
 if [ "$1" = "stop" ]
 then
 	echo "stop"
-	sudo killall -9 SWupdate.exe DataProgram.exe dlg320.exe DLsocket.exe
+	sudo killall -9 FWupdate.exe SWupdate.exe DataProgram.exe dlg320.exe DLsocket.exe
 fi
